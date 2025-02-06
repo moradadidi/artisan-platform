@@ -14,7 +14,7 @@ import {
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(true);
   const cartItemCount = 2; // Example cart count
 
   useEffect(() => {

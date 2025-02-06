@@ -12,13 +12,18 @@ import {
   InputAdornment,
   CircularProgress,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function LoginForm() {
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,7 +49,18 @@ export default function LoginForm() {
       const response = await axios.post('http://127.0.0.1:5000/api/login', formData);
       toast.success('Login successful!');
       // Handle successful login (e.g., store token, redirect)
-      console.log(response.data);
+      console.table(response.data);
+      console.log(response.data.user.role);
+      if (response.data.user.role === "artisan"){
+        navigate('/dashboard');
+
+      }else{
+        navigate('/nav');}
+
+      // Optionally redirect to another page
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Login failed');
@@ -71,9 +87,9 @@ export default function LoginForm() {
         {/* Logo Area */}
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           <img 
-            src="/path-to-your-logo.png" 
+            src="../../public/logo.png" 
             alt="Logo" 
-            style={{ maxWidth: '150px', marginBottom: '10px' }} 
+            style={{ maxWidth: '150px', marginBottom: '10px' , textAlign: 'center' , marginLeft: 'auto', marginRight: 'auto'}} 
           />
         </Box>
         <Typography variant="h4" align="center" gutterBottom>
@@ -132,7 +148,7 @@ export default function LoginForm() {
             fullWidth
             variant="contained"
             disabled={loading}
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3, mb: 2, backgroundColor: '#fbc02d', '&:hover': { backgroundColor: '#f9a825' } }}
             startIcon={loading && <CircularProgress size={20} color="inherit" />}
           >
             {loading ? 'Signing in...' : 'Sign in'}
@@ -143,10 +159,8 @@ export default function LoginForm() {
           <Typography variant="body2" style={{ color: '#757575' }}>
             Don&apos;t have an account?
           </Typography>
-          <Link to="/register" style={{ textDecoration: 'none' }}>
-            <Button variant="outlined" sx={{ mt: 1, color: '#1976d2', borderColor: '#1976d2' }}>
+          <Link to="/register" style={{ textDecoration: 'none', color: '#f9a825'  }}>
               Create new account
-            </Button>
           </Link>
         </Box>
       </Paper>

@@ -29,7 +29,7 @@ authRouter.post("/", async (req, res) => {
 
         // Generate auth token
         const token = user.generateAuthToken();
-        res.status(200).json({ token: token, message: "Logged in successfully" });
+        res.status(200).json({ token: token, user: user, message: "Logged in successfully" });
 
     } catch (error) {
         res.status(500).json({ error: error.message });

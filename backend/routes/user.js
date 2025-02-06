@@ -29,6 +29,7 @@ userRouter.post("/", async (req, res) => {
             email: req.body.email,
             password: hashedPassword,
             isAdmin: req.body.isAdmin || false,
+            role: req.body.role || "user",
         });
 
         // Save user to database

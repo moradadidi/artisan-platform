@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import  { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -11,26 +11,71 @@ import {
   Typography,
   InputAdornment,
   CircularProgress,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
+// --- Logo Component ---
+const Logo = () => (
+  <Box sx={{ textAlign: 'center' }}>
+    <img
+      src="../../public/logo.png"
+      alt="Logo"
+      style={{ maxWidth: '150px', margin: '0 auto' }}
+    />
+  </Box>
+);
+
+// --- Main Register Form Component ---
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    role: '',
   });
   const [loading, setLoading] = useState(false);
 
+  // Adjusted container and paper styles to reduce overall height
+  const containerStyles = {
+    minHeight: '80vh', // Decreased from 100vh to 80vh
+    backgroundColor: '#f5f5f5',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    px: 2,
+    py: 2,
+  };
+
+  const paperStyles = { px: 3, py: 1, maxWidth: 400, width: '100%' };
+
+  const buttonStyles = {
+    mt: 2, // Slightly reduced top margin
+    mb: 2,
+    backgroundColor: '#fbc02d',
+    '&:hover': { backgroundColor: '#f9a825' },
+  };
+
+  // Handle input field changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle role select changes
+  const handleRoleChange = (e) => {
+    const selectedRole = e.target.value;
+    setFormData((prev) => ({ ...prev, role: selectedRole }));
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
+    // Basic validation
     if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
       toast.error('Please fill in all fields');
       return;
@@ -48,15 +93,17 @@ export default function RegisterForm() {
 
     try {
       setLoading(true);
+      // Submit registration data
       const response = await axios.post('http://127.0.0.1:5000/api/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
       toast.success('Registration successful!');
       console.table(response.data);
       console.log('User created');
-      // Optionally redirect to login page here
+      // Optionally, redirect to login page here
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Registration failed');
@@ -69,30 +116,14 @@ export default function RegisterForm() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        backgroundColor: '#f5f5f5', // Light grey background
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        px: 2,
-      }}
-    >
-      <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
-        {/* Logo Section */}
-        <Box sx={{ textAlign: 'center', mb: 2 }}>
-          <img 
-            src="/path-to-your-logo.png" 
-            alt="Logo" 
-            style={{ maxWidth: '150px', marginBottom: '10px' }} 
-          />
-        </Box>
+    <Box sx={containerStyles}>
+      <Paper elevation={3} sx={paperStyles}>
+        <Logo />
         <Typography variant="h4" align="center" gutterBottom>
           Create your account
         </Typography>
-
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          {/* Full Name Field */}
           <TextField
             fullWidth
             label="Full Name"
@@ -113,6 +144,7 @@ export default function RegisterForm() {
             }}
           />
 
+          {/* Email Address Field */}
           <TextField
             fullWidth
             label="Email Address"
@@ -133,6 +165,7 @@ export default function RegisterForm() {
             }}
           />
 
+          {/* Password Field */}
           <TextField
             fullWidth
             label="Password"
@@ -153,6 +186,7 @@ export default function RegisterForm() {
             }}
           />
 
+          {/* Confirm Password Field */}
           <TextField
             fullWidth
             label="Confirm Password"
@@ -173,26 +207,42 @@ export default function RegisterForm() {
             }}
           />
 
+          {/* Role Selection */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="role-label">Role</InputLabel>
+            <Select
+              labelId="role-label"
+              id="role"
+              name="role"
+              value={formData.role}
+              label="Role"
+              onChange={handleRoleChange}
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="artisan">artisan</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Submit Button */}
           <Button
             type="submit"
             fullWidth
             variant="contained"
             disabled={loading}
-            sx={{ mt: 3, mb: 2 }}
+            sx={buttonStyles}
             startIcon={loading && <CircularProgress size={20} color="inherit" />}
           >
             {loading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </Box>
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Typography variant="body2" style={{ color: '#757575' }}>
+        {/* Link to Login */}
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: '#757575' }}>
             Already have an account?
           </Typography>
-          <Link to="/login" style={{ textDecoration: 'none' }}>
-            <Button variant="outlined" sx={{ mt: 1, color: '#1976d2', borderColor: '#1976d2' }}>
-              Sign in instead
-            </Button>
+          <Link to="/login" style={{ textDecoration: 'none', color: '#f9a825' }}>
+            Sign in instead
           </Link>
         </Box>
       </Paper>

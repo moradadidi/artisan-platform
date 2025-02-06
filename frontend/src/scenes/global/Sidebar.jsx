@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
 import {
   Box,
@@ -8,7 +9,7 @@ import {
   createTheme,
   ThemeProvider,
 } from '@mui/material';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Home,
   User,
@@ -28,6 +29,7 @@ import {
   Lock,
   AlertTriangle,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const darkTheme = createTheme({
   palette: {
@@ -58,19 +60,14 @@ const sidebarSections = [
     items: [{ title: 'Dashboard', icon: Home, path: '/dashboard' }],
   },
   {
-    title: 'User Profile & Settings',
+    title: 'Products',
     items: [
-      { title: 'Profile Overview', icon: User, path: '/dashboard/profile' },
-      { title: 'Edit Profile', icon: Settings, path: '/dashboard/profile/edit' },
-      { title: 'Change Password', icon: Lock, path: '/dashboard/profile/change-password' },
-    ],
+      { title: 'All Products', icon: ShoppingCart, path: '/products' },    ],
   },
   {
     title: 'Orders & Purchases',
     items: [
       { title: 'My Orders', icon: Package, path: '/dashboard/orders' },
-      { title: 'Track Order', icon: ShoppingCart, path: '/dashboard/orders/track' },
-      { title: 'Returns & Refunds', icon: Receipt, path: '/dashboard/orders/returns' },
     ],
   },
   {
@@ -85,32 +82,15 @@ const sidebarSections = [
     items: [
       { title: 'My Reviews', icon: Star, path: '/dashboard/reviews' },
       { title: 'Messages', icon: MessageSquare, path: '/dashboard/messages' },
-      { title: 'Notifications', icon: Bell, path: '/dashboard/notifications' },
     ],
   },
-  {
-    title: 'Payment & Shipping',
-    items: [
-      { title: 'Payment Methods', icon: CreditCard, path: '/dashboard/payments' },
-      { title: 'Billing History', icon: Receipt, path: '/dashboard/billing' },
-      { title: 'Saved Addresses', icon: MapPin, path: '/dashboard/addresses' },
-    ],
-  },
-  {
-    title: 'Account Management',
-    items: [
-      { title: 'Settings', icon: Settings, path: '/dashboard/settings' },
-      {
-        title: 'Deactivate Account',
-        icon: AlertTriangle,
-        path: '/dashboard/settings/deactivate',
-        danger: true,
-      },
-    ],
-  },
+  
+  
 ];
 
-// SidebarItem now wraps the MenuItem with a Link to ensure navigation works.
+/**
+ * SidebarItem now wraps the MenuItem with a Link to ensure navigation works.
+ */
 function SidebarItem({ icon: Icon, title, path, selected, setSelected, danger = false }) {
   const theme = useTheme();
 
@@ -155,10 +135,29 @@ function SidebarItem({ icon: Icon, title, path, selected, setSelected, danger = 
   );
 }
 
+// Define propTypes for SidebarItem to satisfy eslint
+SidebarItem.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  title: PropTypes.string.isRequired,
+  path: PropTypes.string.isRequired,
+  selected: PropTypes.string.isRequired,
+  setSelected: PropTypes.func.isRequired,
+  danger: PropTypes.bool,
+};
+
 function App() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState('Dashboard');
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  // Define logout in App so it’s available where it’s used.
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+    toast.success('Logout successful!');
+  };
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -196,6 +195,9 @@ function App() {
                 justifyContent: 'flex-end',
               }}
             >
+                {/* Logo */}
+                
+              {/* Collapse Button */}
               <IconButton
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 sx={{
@@ -223,7 +225,7 @@ function App() {
               <Box sx={{ position: 'relative' }}>
                 <Box
                   component="img"
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=faces"
+                  src="../../../public/default.png"
                   sx={{
                     width: 36,
                     height: 36,
@@ -322,10 +324,10 @@ function App() {
                 p: 2,
               }}
             >
-              <Link to="/logout" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link to="/login" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <MenuItem
                   icon={<LogOut size={18} color={theme.palette.error.main} />}
-                  onClick={() => console.log('Logout')}
+                  onClick={logout}
                   rootStyles={{
                     borderRadius: '6px',
                     '&:hover': {

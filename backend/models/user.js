@@ -17,6 +17,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    role: {
+        type: String,
+        enum: ["user", "admin", "artisan"],
+        default: "user",
+        required: true
+    },
     isAdmin: {
         type: Boolean,
         required: true,
@@ -63,7 +69,9 @@ const validateData = (data) => {
         name: Joi.string().required().label("User Name"),
         email: Joi.string().email().required().label("Email"),
         password: Joi.string().required().label("Password"),
-        isAdmin: Joi.boolean().default(false)
+        isAdmin: Joi.boolean().default(false),
+        role: Joi.string().valid("user", "admin", "artisan").default("user")
+
     });
     return schema.validate(data);
 };
