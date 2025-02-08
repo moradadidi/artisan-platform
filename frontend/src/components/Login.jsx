@@ -55,7 +55,7 @@ export default function LoginForm() {
         navigate('/dashboard');
 
       }else{
-        navigate('/nav');}
+        navigate('/');}
 
       // Optionally redirect to another page
       localStorage.setItem('token', response.data.token);

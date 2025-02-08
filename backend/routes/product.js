@@ -48,9 +48,10 @@ productRouter.post("/", verifyToken, async (req, res) => {
 });
 
 // ✅ GET product by ID
+// ✅ GET product by ID with user details
 productRouter.get("/:id", async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id).populate("user", "name email"); // Adjust fields as needed
         if (!product) {
             return res.status(404).json({ error: "Product not found" });
         }
@@ -59,6 +60,7 @@ productRouter.get("/:id", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // ✅ PUT update a product
 productRouter.put("/:id", verifyToken, async (req, res) => {
