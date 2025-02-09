@@ -1,36 +1,40 @@
 import express from 'express';
 import dotenv from 'dotenv';
-dotenv.config({ path: '../.env' });
- // Load the environment variables from .env file
-
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import connectDB from './config/db.js';
+
+// Import Routes
 import authRouter from './routes/auth.js';
 import userRouter from './routes/user.js';
 import usersRouter from './routes/users.js';
 import productRouter from './routes/product.js';
+import uploadRouter from './routes/upload.js'; // Added image upload route
 
-// console.log("Loaded Environment Variables:", process.env.MONGO_URI);  // Debugging
+// Load Environment Variables
+dotenv.config(); 
 
 const app = express();
 
-// Middleware
-app.use(express.json());
+// 🛠️ Middleware
+app.use(express.json()); // Ensure JSON parsing before routes
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
-// Routes
+// 🚀 Connect to Database
+connectDB()
+  .then(() => console.log('✅ Database Connected'))
+  .catch((err) => console.error('❌ Database Connection Failed:', err));
+
+// 🛣️ API Routes
 app.use('/api/login', authRouter);
 app.use('/api/register', userRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/products', productRouter);
+app.use('/api/upload', uploadRouter); // Handle file uploads
 
-// Connect to Database
-connectDB();
-
+// 🌍 Server Setup
 const PORT = process.env.PORT || 5000;
-console.log(`Server running on port ${process.env.PORT}`);
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

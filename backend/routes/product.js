@@ -1,8 +1,24 @@
 import express from "express";
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary.js"; // Cloudinary config
 import Product from "../models/product.js";
 import { verifyToken } from "../middleware/auth.js";
+
 const productRouter = express.Router();
 
+// ✅ Setup Multer for Cloudinary (Multiple Files)
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: "products",
+        allowed_formats: ["jpg", "png", "jpeg", "webp"],
+    },
+});
+
+const upload = multer({ storage });
+
+// ✅ GET all products
 productRouter.get("/", async (req, res) => {
     try {
         const products = await Product.find();
@@ -12,32 +28,27 @@ productRouter.get("/", async (req, res) => {
     }
 });
 
-productRouter.get("/", async (req, res) => {
+// ✅ CREATE a new product with multiple image uploads
+productRouter.post("/", verifyToken, upload.array("images", 5), async (req, res) => {
     try {
-        const products = await Product.find();
-        res.json(products); // Returns an array
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        const { name, category, price, user, description, countInStock, rating } = req.body;
 
-// ✅ POST create a new product
-productRouter.post("/", verifyToken, async (req, res) => {
-    try {
-        const { name, category, price, user, image, description, countInStock, rating } = req.body;
         if (!name || !category || !price || !user) {
             return res.status(400).json({ error: "Missing required fields" });
         }
+
+        // Get uploaded images
+        const imageUrls = req.files.map(file => file.path);
 
         const product = new Product({
             name,
             category,
             price,
             user,
-            image: image || "https://via.placeholder.com/150",
+            images: imageUrls,
             description: description || "No description provided",
             countInStock: countInStock || 0,
-            rating: rating || 3
+            rating: rating || 3,
         });
 
         await product.save();
@@ -47,32 +58,23 @@ productRouter.post("/", verifyToken, async (req, res) => {
     }
 });
 
-// ✅ GET product by ID
-// ✅ GET product by ID with user details
-productRouter.get("/:id", async (req, res) => {
+// ✅ UPDATE a product (Supports Updating Multiple Images)
+productRouter.put("/:id", verifyToken, upload.array("images", 5), async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id).populate("user", "name email"); // Adjust fields as needed
-        if (!product) {
-            return res.status(404).json({ error: "Product not found" });
-        }
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+        let updatedData = { ...req.body };
 
-
-// ✅ PUT update a product
-productRouter.put("/:id", verifyToken, async (req, res) => {
-    try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id,
-            { $set: req.body },
-            { new: true, runValidators: true }
-        );
-        if (!updatedProduct) {
-            return res.status(404).json({ error: "Product not found" });
+        // If new images are uploaded, update the images field
+        if (req.files.length > 0) {
+            updatedData.images = req.files.map(file => file.path);
         }
+
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedData, {
+            new: true,
+            runValidators: true,
+        });
+
+        if (!updatedProduct) return res.status(404).json({ error: "Product not found" });
+
         res.json(updatedProduct);
     } catch (error) {
         res.status(500).json({ error: error.message });

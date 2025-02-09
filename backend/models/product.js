@@ -7,9 +7,9 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product name is required"],
       trim: true,
     },
-    image: {
-      type: String,
-      default: "https://via.placeholder.com/150", // Default placeholder image
+    images: {
+      type: [String], // Now supports multiple image URLs
+      default: ["https://via.placeholder.com/150"], // Default placeholder image
     },
     category: {
       type: String,
