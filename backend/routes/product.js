@@ -60,6 +60,7 @@ productRouter.post("/", verifyToken, upload.array("images", 5), async (req, res)
             description: description || "No description provided",
             countInStock: countInStock || 0,
             rating: rating || 3,
+            tags: req.body.tags ? req.body.tags.split(",") : [],
         });
 
         await product.save();

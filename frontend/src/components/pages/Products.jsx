@@ -1,460 +1,400 @@
-import { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  CardMedia, 
-  CardContent, 
-  Typography, 
-  Box, 
-  IconButton,
-  Rating,
-  Drawer,
-  Checkbox,
-  Slider,
-  FormGroup,
-  FormControlLabel,
-  Divider,
-  Button,
-  Breadcrumbs,
-  Link,
-  Chip,
-  Paper,
-  InputBase,
-  Avatar,
-  Tooltip,
-} from '@mui/material';
-import { Heart, ShoppingCart, Filter, Search, Star, ArrowUpRight, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { 
+  Button, 
+  Dialog, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle, 
+  TextField, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper, 
+  IconButton 
+} from '@mui/material';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const categories = [
-  "All Categories",
-  "Ceramics",
-  "Textiles",
-  "Woodwork",
-  "Jewelry",
-  "Home Decor",
-  "Kitchen",
-  "Art"
-];
-
-const Products = () => {
+const ProductTable = () => {
   const [products, setProducts] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 200]);
-  const [selectedCategories, setSelectedCategories] = useState(['All Categories']);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // Toggle favorite by calling backend endpoints
-  const handleFavoriteToggle = async (productId) => {
-    if (!user) {
-      toast.error('You must be logged in to favorite products.');
-      return;
-    }
-    const product = products.find(p => p.id === productId);
-    try {
-      if (!product.isFavorite) {
-        // Add favorite
-        const response = await axios.post(
-          'http://127.0.0.1:5000/api/favorite',
-          { product: productId },
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-        );
-        toast.success('Added to favorites');
-        // Update product locally with favorite info
-        setProducts(prev =>
-          prev.map(p =>
-            p.id === productId 
-              ? { ...p, isFavorite: true, favoriteId: response.data._id } 
-              : p
-          )
-        );
-      } else {
-        // Remove favorite using favoriteId
-        await axios.delete(
-          `http://127.0.0.1:5000/api/favorite/${product.favoriteId}`,
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-        );
-        toast.success('Removed from favorites');
-        setProducts(prev =>
-          prev.map(p =>
-            p.id === productId 
-              ? { ...p, isFavorite: false, favoriteId: null } 
-              : p
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error('Error updating favorites. Please try again.');
-    }
-  };
+  // For new product (excluding image field now)
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: '',
+    description: '',
+    price: '',
+    countInStock: '',
+  });
+  
+  // State to hold files for new product and for product update
+  const [newProductImages, setNewProductImages] = useState([]);
+  const [editProductImages, setEditProductImages] = useState([]);
 
-  // Update Add to Cart: call backend API and show notifications
-  const handleAddToCart = async (productId) => {
-    if (!user) {
-      toast.error('You must be logged in to add products to your cart.');
-      return;
-    }
-    const product = products.find(p => p.id === productId);
-    const payload = {
-      customerId: user._id,
-      products: [{ productId, quantity: 1 }],
-      totalAmount: product.price,
-    };
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-    try {
-      await axios.post('http://127.0.0.1:5000/api/cart', payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      toast.success('Added to cart successfully!');
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Error adding to cart. Please try again.');
-    }
-  };
-
-  // Handle filtering UI state
-  const handlePriceChange = (event, newValue) => {
-    setPriceRange(newValue);
-  };
-
-  const handleCategoryChange = (category) => {
-    if (category === 'All Categories') {
-      setSelectedCategories(['All Categories']);
-    } else {
-      const newCategories = selectedCategories.filter(c => c !== 'All Categories');
-      if (newCategories.includes(category)) {
-        setSelectedCategories(newCategories.filter(c => c !== category));
-      } else {
-        setSelectedCategories([...newCategories, category]);
-      }
-    }
-  };
-
-  // Fetch products from backend and format them for our UI.
+  // GET all products
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/products');
-      const data = await response.json();
-      const formattedProducts = data.map(product => ({
-        id: product._id,
-        name: product.name,
-        price: product.price || 0,
-        rating: product.rating || 0,
-        reviews: product.numReviews || 0,
-        image: product.images[0] || '',
-        artisan: {
-          id: product.user._id || 0,
-          name: product.user.name || 'Unknown',
-          avatar: product.user.profilePicture || '',
-          location: product.user.adresse || 'Canada, Ontario',
-          rating: product.artisanRating || 3,
-          reviews: product.artisanReviews || 125
-        },
-        category: product.category || 'Uncategorized',
-        tags: product.tags || [],
-        inStock: product.countInStock > 0,
-        isFavorite: product.isFavorite || false,
-        favoriteId: product.favoriteId || null
-      }));
-      setProducts(formattedProducts);
+      const response = await axios.get(`http://127.0.0.1:5000/api/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setProducts(Array.isArray(response.data) ? response.data : [response.data]);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
   };
 
-  useEffect(() => {
-    fetchProducts();  
-  }, []);
+  // DELETE a product
+  const handleDelete = async (productId) => {
+    try {
+      await axios.delete(`http://127.0.0.1:5000/api/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchProducts();
+      toast.success('Product deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
 
-  // Filter content for the Drawer / Sidebar
-  const FilterContent = () => (
-    <Box sx={{ p: 3 }}>
-      {/* Search */}
-      <Box sx={{ 
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '8px',
-        p: 1,
-        mb: 3
-      }}>
-        <Search size={20} color="#666" />
-        <InputBase
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{ ml: 1, flex: 1 }}
-        />
-      </Box>
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setNewProductImages([]);
+  };
 
-      {/* Categories */}
-      <Typography variant="subtitle1" gutterBottom>Categories</Typography>
-      <FormGroup>
-        {categories.map((category) => (
-          <FormControlLabel
-            key={category}
-            control={
-              <Checkbox
-                checked={selectedCategories.includes(category)}
-                onChange={() => handleCategoryChange(category)}
-              />
-            }
-            label={category}
-          />
-        ))}
-      </FormGroup>
+  const handleEditOpen = (product) => {
+    setCurrentProduct(product);
+    setEditOpen(true);
+  };
 
-      <Divider sx={{ my: 3 }} />
+  const handleEditClose = () => {
+    setEditOpen(false);
+    setCurrentProduct(null);
+    setEditProductImages([]);
+  };
 
-      {/* Price Range */}
-      <Typography variant="subtitle1" gutterBottom>Price Range</Typography>
-      <Slider
-        value={priceRange}
-        onChange={handlePriceChange}
-        valueLabelDisplay="auto"
-        min={0}
-        max={200}
-        sx={{ mt: 2 }}
-      />
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-        <Typography variant="body2">${priceRange[0]}</Typography>
-        <Typography variant="body2">${priceRange[1]}</Typography>
-      </Box>
+  // Update text input values for adding product
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewProduct((prev) => ({ ...prev, [name]: value }));
+  };
 
-      <Button variant="contained" fullWidth sx={{ mt: 3 }}>
-        Apply Filters
-      </Button>
-    </Box>
-  );
+  // Update text input values for editing product
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentProduct((prev) => ({ ...prev, [name]: value }));
+  };
 
-  // Single Product Card component
-  const ProductCard = ({ product }) => (
-    <Card sx={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'all 0.2s ease-in-out',
-      cursor: 'pointer',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+  // Handle multiple file selection for adding a product
+  const handleNewProductImageChange = (e) => {
+    setNewProductImages(Array.from(e.target.files));
+  };
+
+  // Handle multiple file selection for updating a product
+  const handleEditProductImageChange = (e) => {
+    setEditProductImages(Array.from(e.target.files));
+  };
+
+  // Create a new product using FormData to include files
+  const handleAddProduct = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('name', newProduct.name);
+      formData.append('category', newProduct.category);
+      formData.append('description', newProduct.description);
+      formData.append('price', newProduct.price);
+      formData.append('countInStock', newProduct.countInStock);
+      formData.append('user', user._id);
+
+      newProductImages.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      await axios.post('http://127.0.0.1:5000/api/products', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      fetchProducts();
+      toast.success('Product added successfully!');
+      handleClose();
+      setNewProduct({ name: '', category: '', description: '', price: '', countInStock: '' });
+      setNewProductImages([]);
+    } catch (error) {
+      console.error('Error adding product:', error.response?.data || error.message);
+    }
+  };
+
+  // Update product (if new images are provided, use FormData)
+  const handleUpdateProduct = async () => {
+    try {
+      if (editProductImages.length > 0) {
+        const formData = new FormData();
+        formData.append('name', currentProduct.name);
+        formData.append('category', currentProduct.category);
+        formData.append('description', currentProduct.description);
+        formData.append('price', currentProduct.price);
+        formData.append('countInStock', currentProduct.countInStock);
+        formData.append('user', currentProduct.user);
+        
+        editProductImages.forEach((file) => {
+          formData.append('images', file);
+        });
+        await axios.put(`http://127.0.0.1:5000/api/products/${currentProduct._id}`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        console.log(currentProduct._id)
+      } else {
+        // No new images selected; update with JSON
+        await axios.put(`http://127.0.0.1:5000/api/products/${currentProduct._id}`, currentProduct, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
-    }}>
-      <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="260"
-          image={product.image}
-          alt={product.name}
-          sx={{ 
-            objectFit: 'cover',
-            transition: 'transform 0.3s ease-in-out',
-            '&:hover': { transform: 'scale(1.05)' }
-          }}
-          onClick={() => navigate(`/products/${product.id}`)}
-        />
-        <Tooltip title={product.isFavorite ? "Remove from Favorites" : "Add to Favorites"}>
-          <IconButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleFavoriteToggle(product.id);
-            }}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              backgroundColor: 'white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              '&:hover': { backgroundColor: 'white', transform: 'scale(1.1)' }
-            }}
-          >
-            <Heart 
-              size={20} 
-              fill={product.isFavorite ? '#ff4081' : 'none'}
-              color={product.isFavorite ? '#ff4081' : '#666'}
-            />
-          </IconButton>
-        </Tooltip>
-        {!product.inStock && (
-          <Chip
-            label="Out of Stock"
-            color="error"
-            size="small"
-            sx={{ position: 'absolute', left: 8, top: 8 }}
-          />
-        )}
-      </Box>
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Artisan Info */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            mb: 2,
-            cursor: 'pointer',
-            '&:hover .artisan-name': { color: 'primary.main' }
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/artisans/${product.artisan.id}`);
-          }}
-        >
-          <Avatar
-            src={product.artisan.avatar}
-            alt={product.artisan.name}
-            sx={{ width: 40, height: 40, mr: 1 }}
-          />
-          <Box>
-            <Typography variant="subtitle2" className="artisan-name" sx={{ transition: 'color 0.2s ease-in-out' }}>
-              {product.artisan.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <MapPin size={14} color="#666" />
-              <Typography variant="caption" color="text.secondary">
-                {product.artisan.location}
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ ml: 'auto', textAlign: 'right' }}>
-            <Rating value={product.artisan.rating} size="small" readOnly />
-            <Typography variant="caption" color="text.secondary" display="block">
-              {product.artisan.reviews} reviews
-            </Typography>
-          </Box>
-        </Box>
+      fetchProducts();
+      toast.success('Product updated successfully!');
+      handleEditClose();
+    } catch (error) {
+      console.log(currentProduct._id)
 
-        <Typography 
-          variant="h6" 
-          gutterBottom
-          sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
-          onClick={() => navigate(`/products/${product.id}`)}
-        >
-          {product.name}
-        </Typography>
-
-        <Box sx={{ mb: 1 }}>
-          {product.tags.map((tag) => (
-            <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-          ))}
-        </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Rating value={product.rating} precision={0.5} size="small" readOnly />
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            ({product.reviews})
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto', pt: 2 }}>
-          <Typography variant="h6" color="primary">
-            ${product.price}
-          </Typography>
-          <Tooltip title={product.inStock ? 'Add to Cart' : 'Out of Stock'}>
-            <span>
-              <IconButton 
-                color="primary"
-                disabled={!product.inStock}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToCart(product.id);
-                }}
-                sx={{
-                  backgroundColor: product.inStock ? 'primary.main' : 'grey.200',
-                  color: 'white',
-                  '&:hover': { backgroundColor: product.inStock ? 'primary.dark' : 'grey.200' }
-                }}
-              >
-                <ShoppingCart size={20} />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      </CardContent>
-    </Card>
-  );
+      console.error('Error updating product:', error);
+    }
+  };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Mobile Filters Drawer */}
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        sx={{ display: { sm: 'none' } }}
-      >
-        <Box sx={{ width: 280 }}>
-          <FilterContent />
-        </Box>
-      </Drawer>
+    <div className="p-4">
+      <Button variant="contained" color="success" startIcon={<Plus />} onClick={handleOpen}>
+        Add Product
+      </Button>
 
-      {/* Desktop Filters Sidebar */}
-      <Paper
-        elevation={0}
-        sx={{
-          width: 280,
-          flexShrink: 0,
-          display: { xs: 'none', sm: 'block' },
-          borderRight: '1px solid #eee',
-          height: 'calc(100vh - 64px)',
-          position: 'sticky',
-          top: 64,
-          overflowY: 'auto'
-        }}
-      >
-        <FilterContent />
-      </Paper>
+      <TableContainer component={Paper} className="mt-4">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Images</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Price ($)</TableCell>
+              <TableCell>In Stock</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {products.length > 0 ? (
+              products.map((product) => (
+                <TableRow key={product._id} hover>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>
+                    {product.images.map((image, index) => (
+                      <img  
+                        key={index}
+                        src={image}
+                        alt={`Product ${product.name} Image ${index + 1}`}
+                        className="w-10 h-10"
+                      />
+                    ))}
+                  </TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell>{product.price}</TableCell>
+                  <TableCell>{product.countInStock}</TableCell>
+                  <TableCell>
+                    <IconButton color="success" onClick={() => handleEditOpen(product)}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton color="error" onClick={() => handleDelete(product._id)}>
+                      <Trash2 />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No products found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Main Products Grid */}
-      <Box sx={{ flex: 1, p: 3 }}>
-        <Container maxWidth="xl">
-          {/* Header & Breadcrumbs */}
-          <Box sx={{ mb: 4 }}>
-            <Breadcrumbs sx={{ mb: 2 }}>
-              <Link underline="hover" color="inherit" href="/">
-                Home
-              </Link>
-              <Typography color="text.primary">Shop</Typography>
-            </Breadcrumbs>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h4" gutterBottom>
-                All Products
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button variant="outlined" startIcon={<Star />}>
-                  Popular
-                </Button>
-                <Button variant="outlined" startIcon={<ArrowUpRight />}>
-                  Latest
-                </Button>
-              </Box>
-            </Box>
-          </Box>
+      {/* Add Product Dialog */}
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Add New Product</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Name"
+            type="text"
+            fullWidth
+            name="name"
+            value={newProduct.name}
+            onChange={handleChange}
+            variant="outlined"
+            className="mb-2"
+          />
+          <TextField
+            margin="dense"
+            label="Category"
+            type="text"
+            fullWidth
+            name="category"
+            value={newProduct.category}
+            onChange={handleChange}
+            variant="outlined"
+            className="mb-2"
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            type="text"
+            fullWidth
+            name="description"
+            value={newProduct.description}
+            onChange={handleChange}
+            variant="outlined"
+            className="mb-2"
+          />
+          <TextField
+            margin="dense"
+            label="Price"
+            type="number"
+            fullWidth
+            name="price"
+            value={newProduct.price}
+            onChange={handleChange}
+            variant="outlined"
+            className="mb-2"
+          />
+          <TextField
+            margin="dense"
+            label="Count In Stock"
+            type="number"
+            fullWidth
+            name="countInStock"
+            value={newProduct.countInStock}
+            onChange={handleChange}
+            variant="outlined"
+            className="mb-2"
+          />
+          {/* File input for multiple images */}
+          <input
+            type="file"
+            multiple
+            onChange={handleNewProductImageChange}
+            style={{ marginTop: '10px' }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} color="error">
+            Cancel
+          </Button>
+          <Button onClick={handleAddProduct} color="success" variant="contained">
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          {/* Mobile Filter Button */}
-          <Box sx={{ display: { sm: 'none' }, mb: 2 }}>
-            <Button startIcon={<Filter />} variant="outlined" onClick={() => setDrawerOpen(true)} fullWidth>
-              Filters
-            </Button>
-          </Box>
-
-          {/* Products Grid */}
-          <Grid container spacing={3}>
-            {products.map((product) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-                <ProductCard product={product} />
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
-    </Box>
+      {/* Edit Product Dialog */}
+      <Dialog open={editOpen} onClose={handleEditClose}>
+        <DialogTitle>Edit Product</DialogTitle>
+        <DialogContent>
+          {currentProduct && (
+            <>
+              <TextField
+                margin="dense"
+                label="Name"
+                type="text"
+                fullWidth
+                name="name"
+                value={currentProduct.name}
+                onChange={handleEditChange}
+                variant="outlined"
+                className="mb-2"
+              />
+              <TextField
+                margin="dense"
+                label="Category"
+                type="text"
+                fullWidth
+                name="category"
+                value={currentProduct.category}
+                onChange={handleEditChange}
+                variant="outlined"
+                className="mb-2"
+              />
+              <TextField
+                margin="dense"
+                label="Description"
+                type="text"
+                fullWidth
+                name="description"
+                value={currentProduct.description}
+                onChange={handleEditChange}
+                variant="outlined"
+                className="mb-2"
+              />
+              <TextField
+                margin="dense"
+                label="Price"
+                type="number"
+                fullWidth
+                name="price"
+                value={currentProduct.price}
+                onChange={handleEditChange}
+                variant="outlined"
+                className="mb-2"
+              />
+              <TextField
+                margin="dense"
+                label="Count In Stock"
+                type="number"
+                fullWidth
+                name="countInStock"
+                value={currentProduct.countInStock}
+                onChange={handleEditChange}
+                variant="outlined"
+                className="mb-2"
+              />
+              {/* File input to optionally update images */}
+              <input
+                type="file"
+                multiple
+                onChange={handleEditProductImageChange}
+                style={{ marginTop: '10px' }}
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleEditClose} color="error">
+            Cancel
+          </Button>
+          <Button onClick={handleUpdateProduct} color="success" variant="contained">
+            Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
   );
 };
 
-export default Products;
+export default ProductTable;

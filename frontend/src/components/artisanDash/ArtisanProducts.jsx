@@ -9,12 +9,6 @@ import {
   CardContent,
   CardMedia,
   IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -23,13 +17,10 @@ import {
   MenuItem,
   Paper,
   Divider,
+  Autocomplete,
+  Grid as MuiGrid,
 } from '@mui/material';
 import {
-  Package,
-  Settings,
-  ShoppingBag,
-  Heart,
-  CreditCard,
   Edit,
   Trash2,
   Plus,
@@ -60,9 +51,10 @@ const UserDash = () => {
   const [newProduct, setNewProduct] = useState({
     name: '',
     price: '',
-    category: '',
+    category: '', // single category (string)
     stock: '',
     description: '',
+    tags: [],
   });
   // File uploads for new product
   const [newProductImages, setNewProductImages] = useState([]);
@@ -71,8 +63,6 @@ const UserDash = () => {
 
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user'));
-
-
 
   // Fetch user's products
   const fetchProducts = async () => {
@@ -100,16 +90,19 @@ const UserDash = () => {
     setEditProductImages(Array.from(e.target.files));
   };
 
-  // Handle adding a product with multipart/form-data
+  // Handle adding a product with multipart/form-data (including tags)
   const handleAddProduct = async () => {
     try {
       const formData = new FormData();
       formData.append('name', newProduct.name);
       formData.append('price', newProduct.price);
+      // For a single category, we just pass the string.
       formData.append('category', newProduct.category);
       formData.append('countInStock', newProduct.stock); // maps stock to countInStock
       formData.append('description', newProduct.description);
       formData.append('user', user._id);
+      // Append tags as a comma-separated string
+      formData.append('tags', newProduct.tags.join(','));
       newProductImages.forEach((file) => formData.append('images', file));
       await axios.post('http://127.0.0.1:5000/api/products', formData, {
         headers: {
@@ -119,7 +112,7 @@ const UserDash = () => {
       });
       toast.success('Product added successfully!');
       setOpenAddDialog(false);
-      setNewProduct({ name: '', price: '', category: '', stock: '', description: '' });
+      setNewProduct({ name: '', price: '', category: '', stock: '', description: '', tags: [] });
       setNewProductImages([]);
       fetchProducts();
     } catch (error) {
@@ -137,6 +130,7 @@ const UserDash = () => {
       formData.append('category', selectedProduct.category);
       formData.append('countInStock', selectedProduct.stock);
       formData.append('description', selectedProduct.description);
+      formData.append('tags', (selectedProduct.tags || []).join(','));
       if (editProductImages.length > 0) {
         editProductImages.forEach((file) => formData.append('images', file));
       }
@@ -171,13 +165,8 @@ const UserDash = () => {
     }
   };
 
-  const drawerWidth = 240;
-
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* Sidebar */}
-
-
       {/* Main content */}
       <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
         <Container maxWidth="lg">
@@ -301,6 +290,21 @@ const UserDash = () => {
               onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
               variant="outlined"
             />
+            <Autocomplete
+              multiple
+              freeSolo
+              options={[]}
+              value={newProduct.tags}
+              onChange={(event, newValue) => setNewProduct({ ...newProduct, tags: newValue })}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Tags"
+                  variant="outlined"
+                  helperText="Enter tags (press enter to add)"
+                />
+              )}
+            />
             <Button variant="outlined" component="label">
               Upload Images
               <input type="file" multiple hidden onChange={handleNewProductImageChange} />
@@ -384,6 +388,21 @@ const UserDash = () => {
                 onChange={(e) => setSelectedProduct({ ...selectedProduct, description: e.target.value })}
                 variant="outlined"
               />
+              <Autocomplete
+                multiple
+                freeSolo
+                options={[]}
+                value={selectedProduct.tags || []}
+                onChange={(event, newValue) => setSelectedProduct({ ...selectedProduct, tags: newValue })}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Tags"
+                    variant="outlined"
+                    helperText="Enter tags (press enter to add)"
+                  />
+                )}
+              />
               <Button variant="outlined" component="label">
                 Upload New Images
                 <input type="file" multiple hidden onChange={handleEditProductImageChange} />
@@ -402,9 +421,9 @@ const UserDash = () => {
                   <Typography variant="subtitle2" gutterBottom>
                     Current Images:
                   </Typography>
-                  <Grid container spacing={1}>
+                  <MuiGrid container spacing={1}>
                     {selectedProduct.images.map((img, index) => (
-                      <Grid item xs={6} sm={4} key={index}>
+                      <MuiGrid item xs={6} sm={4} key={index}>
                         <Box
                           component="img"
                           src={img}
@@ -416,9 +435,9 @@ const UserDash = () => {
                             objectFit: 'cover',
                           }}
                         />
-                      </Grid>
+                      </MuiGrid>
                     ))}
-                  </Grid>
+                  </MuiGrid>
                 </Box>
               )}
             </Box>
