@@ -35,6 +35,9 @@ const productSchema = new mongoose.Schema(
       max: [5, "Maximum rating is 5"],
       default: 3,
     },
+    tags: {
+      type: [String],
+    },
     numReviews: {
       type: Number,
       default: 0,

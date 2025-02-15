@@ -197,6 +197,14 @@ function App() {
             >
                 {/* Logo */}
                 
+                <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Box
+                    component="img"
+                    src="../../../public/Logo.png"
+                    sx={{ width: '45%', height: '100%' , borderRadius: '95%' }}
+                  />
+                </Link>
+              
               {/* Collapse Button */}
               <IconButton
                 onClick={() => setIsCollapsed(!isCollapsed)}

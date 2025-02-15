@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Container, 
   Grid, 
@@ -17,44 +17,17 @@ import {
   Divider,
   Button,
   Breadcrumbs,
-  Link,
+  Link as MUILink,
   Chip,
   Paper,
   InputBase,
-  Badge,
+  Avatar,
   Tooltip,
 } from '@mui/material';
-import { Heart, ShoppingCart, Filter, Search, Star, ArrowUpRight } from 'lucide-react';
+import { Heart, ShoppingCart, Filter, Search, Star, ArrowUpRight, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const sampleProducts = [
-  {
-    id: 1,
-    name: "Handcrafted Ceramic Vase",
-    price: 59.99,
-    rating: 4.5,
-    reviews: 12,
-    image: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-    artisan: "Sarah Miller",
-    category: "Home Decor",
-    tags: ["Handmade", "Ceramic", "Vase"],
-    inStock: true,
-    isFavorite: false,
-  },
-  {
-    id: 2,
-    name: "Artisanal Bowl Set",
-    price: 45.99,
-    rating: 4.8,
-    reviews: 28,
-    image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=400",
-    artisan: "John Doe",
-    category: "Kitchen",
-    tags: ["Handmade", "Ceramic", "Set"],
-    inStock: true,
-    isFavorite: true,
-  },
-];
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const categories = [
   "All Categories",
@@ -68,30 +41,86 @@ const categories = [
 ];
 
 const Products = () => {
-  const [products, setProducts] = useState(sampleProducts);
+  const [products, setProducts] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 200]);
   const [selectedCategories, setSelectedCategories] = useState(['All Categories']);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  
+  const user = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
 
-  const handleFavoriteToggle = (productId) => {
-    setProducts(products.map(product => 
-      product.id === productId 
-        ? { ...product, isFavorite: !product.isFavorite }
-        : product
-    ));
+  // Toggle favorite for a product using the same approach as in your Favorites page.
+  const handleFavoriteToggle = async (productId) => {
+    if (!user) {
+      toast.error('You must be logged in to favorite products.');
+      return;
+    }
+    const product = products.find(p => p.id === productId);
+    try {
+      if (!product.isFavorite) {
+        // Add favorite: POST /api/favorites
+        const response = await axios.post(
+          'http://127.0.0.1:5000/api/favorites',
+          { product: productId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Added to favorites');
+        setProducts(prev =>
+          prev.map(p =>
+            p.id === productId 
+              ? { ...p, isFavorite: true, favoriteId: response.data._id } 
+              : p
+          )
+        );
+      } else {
+        // Remove favorite: DELETE /api/favorites/:id
+        await axios.delete(
+          `http://127.0.0.1:5000/api/favorites/${product.favoriteId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Removed from favorites');
+        setProducts(prev =>
+          prev.map(p =>
+            p.id === productId 
+              ? { ...p, isFavorite: false, favoriteId: null } 
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Error updating favorites. Please try again.');
+    }
   };
 
-  const handleAddToCart = (productId) => {
-    // Implement cart functionality
-    console.log('Added to cart:', productId);
+  // Add product to cart.
+  const handleAddToCart = async (productId) => {
+    if (!user) {
+      toast.error('You must be logged in to add products to your cart.');
+      return;
+    }
+    const product = products.find(p => p.id === productId);
+    const payload = {
+      customerId: user._id,
+      products: [{ productId, quantity: 1 }],
+      totalAmount: product.price,
+    };
+
+    try {
+      await axios.post('http://127.0.0.1:5000/api/cart', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Error adding to cart. Please try again.');
+    }
   };
 
-  const handlePriceChange = (event, newValue) => {
-    setPriceRange(newValue);
-  };
-
+  // Handle filtering UI state.
+  const handlePriceChange = (event, newValue) => setPriceRange(newValue);
   const handleCategoryChange = (category) => {
     if (category === 'All Categories') {
       setSelectedCategories(['All Categories']);
@@ -105,8 +134,66 @@ const Products = () => {
     }
   };
 
+  // Fetch products and merge with the user's favorites.
+  const fetchProducts = async () => {
+    try {
+      // Fetch all products.
+      const response = await fetch('http://127.0.0.1:5000/api/products');
+      const data = await response.json();
+      const formattedProducts = data.map(product => ({
+        id: product._id,
+        name: product.name,
+        price: product.price || 0,
+        rating: product.rating || 0,
+        reviews: product.numReviews || 0,
+        image: product.images[0] || '',
+        artisan: {
+          id: product.user._id || 0,
+          name: product.user.name || 'Unknown',
+          avatar: product.user.profilePicture || '',
+          location: product.user.adresse || 'Canada, Ontario',
+          rating: product.artisanRating || 3,
+          reviews: product.artisanReviews || 125
+        },
+        category: product.category || 'Uncategorized',
+        tags: product.tags || [],
+        inStock: product.countInStock > 0,
+        isFavorite: false,
+        favoriteId: null
+      }));
+      
+      // If user is logged in, fetch favorites and merge.
+      if (user && token) {
+        const favResponse = await axios.get(`http://127.0.0.1:5000/api/favorites/${user._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const favoritesData = favResponse.data;
+        const favoritesMap = {};
+        favoritesData.forEach(fav => {
+          // Map the favorite by its associated product ID.
+          favoritesMap[fav.product._id] = fav._id;
+        });
+        formattedProducts.forEach(prod => {
+          if (favoritesMap[prod.id]) {
+            prod.isFavorite = true;
+            prod.favoriteId = favoritesMap[prod.id];
+          }
+        });
+      }
+      
+      setProducts(formattedProducts);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();  
+  }, []);
+
+  // Filter content for the Drawer / Sidebar.
   const FilterContent = () => (
-    <Box>
+    <Box sx={{ p: 3 }}>
       {/* Search */}
       <Box sx={{ 
         display: 'flex',
@@ -124,7 +211,6 @@ const Products = () => {
           sx={{ ml: 1, flex: 1 }}
         />
       </Box>
-
       {/* Categories */}
       <Typography variant="subtitle1" gutterBottom>Categories</Typography>
       <FormGroup>
@@ -141,9 +227,7 @@ const Products = () => {
           />
         ))}
       </FormGroup>
-
       <Divider sx={{ my: 3 }} />
-
       {/* Price Range */}
       <Typography variant="subtitle1" gutterBottom>Price Range</Typography>
       <Slider
@@ -158,17 +242,13 @@ const Products = () => {
         <Typography variant="body2">${priceRange[0]}</Typography>
         <Typography variant="body2">${priceRange[1]}</Typography>
       </Box>
-
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ mt: 3 }}
-      >
+      <Button variant="contained" fullWidth sx={{ mt: 3 }}>
         Apply Filters
       </Button>
     </Box>
   );
 
+  // Single Product Card.
   const ProductCard = ({ product }) => (
     <Card sx={{ 
       height: '100%',
@@ -181,10 +261,7 @@ const Products = () => {
         boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
       }
     }}>
-      <Box 
-        sx={{ position: 'relative' }}
-        onClick={() => navigate(`/products/${product.id}`)}
-      >
+      <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
           height="260"
@@ -193,76 +270,99 @@ const Products = () => {
           sx={{ 
             objectFit: 'cover',
             transition: 'transform 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'scale(1.05)'
-            }
+            '&:hover': { transform: 'scale(1.05)' }
           }}
+          onClick={() => navigate(`/products/${product.id}`)}
         />
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handleFavoriteToggle(product.id);
-          }}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            backgroundColor: 'white',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            '&:hover': {
+        <Tooltip title={product.isFavorite ? "Remove from Favorites" : "Add to Favorites"}>
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              handleFavoriteToggle(product.id);
+            }}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
               backgroundColor: 'white',
-              transform: 'scale(1.1)'
-            }
-          }}
-        >
-          <Heart 
-            size={20} 
-            fill={product.isFavorite ? '#ff4081' : 'none'}
-            color={product.isFavorite ? '#ff4081' : '#666'}
-          />
-        </IconButton>
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              '&:hover': { backgroundColor: 'white', transform: 'scale(1.1)' }
+            }}
+          >
+            <Heart 
+              size={20} 
+              fill={product.isFavorite ? '#ff4081' : 'none'}
+              color={product.isFavorite ? '#ff4081' : '#666'}
+            />
+          </IconButton>
+        </Tooltip>
         {!product.inStock && (
           <Chip
             label="Out of Stock"
             color="error"
             size="small"
-            sx={{
-              position: 'absolute',
-              left: 8,
-              top: 8
-            }}
+            sx={{ position: 'absolute', left: 8, top: 8 }}
           />
         )}
       </Box>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ mb: 1 }}>
-          {product.tags.map((tag) => (
-            <Chip
-              key={tag}
-              label={tag}
-              size="small"
-              sx={{ mr: 0.5, mb: 0.5 }}
-            />
-          ))}
+        {/* Artisan Info */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            mb: 2,
+            cursor: 'pointer',
+            '&:hover .artisan-name': { color: 'primary.main' }
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/artisans/${product.artisan.id}`);
+          }}
+        >
+          <Avatar
+            src={product.artisan.avatar}
+            alt={product.artisan.name}
+            sx={{ width: 40, height: 40, mr: 1 }}
+          />
+          <Box>
+            <Typography variant="subtitle2" className="artisan-name" sx={{ transition: 'color 0.2s ease-in-out' }}>
+              {product.artisan.name}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <MapPin size={14} color="#666" />
+              <Typography variant="caption" color="text.secondary">
+                {product.artisan.location}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ ml: 'auto', textAlign: 'right' }}>
+            <Rating value={product.artisan.rating} size="small" readOnly />
+            <Typography variant="caption" color="text.secondary" display="block">
+              {product.artisan.reviews} reviews
+            </Typography>
+          </Box>
         </Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography 
+          variant="h6" 
+          gutterBottom
+          sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+          onClick={() => navigate(`/products/${product.id}`)}
+        >
           {product.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          By {product.artisan}
-        </Typography>
+        <Box sx={{ mb: 1 }}>
+          {product.tags.map((tag) => (
+            <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+          ))}
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Rating value={product.rating} precision={0.5} size="small" readOnly />
           <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
             ({product.reviews})
           </Typography>
         </Box>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mt: 'auto'
-        }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto', pt: 2 }}>
           <Typography variant="h6" color="primary">
             ${product.price}
           </Typography>
@@ -278,9 +378,7 @@ const Products = () => {
                 sx={{
                   backgroundColor: product.inStock ? 'primary.main' : 'grey.200',
                   color: 'white',
-                  '&:hover': {
-                    backgroundColor: product.inStock ? 'primary.dark' : 'grey.200',
-                  }
+                  '&:hover': { backgroundColor: product.inStock ? 'primary.dark' : 'grey.200' }
                 }}
               >
                 <ShoppingCart size={20} />
@@ -294,27 +392,24 @@ const Products = () => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Filters Drawer for Mobile */}
+      {/* Mobile Filters Drawer */}
       <Drawer
         anchor="left"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         sx={{ display: { sm: 'none' } }}
       >
-        <Box sx={{ width: 280, p: 3 }}>
-          <Typography variant="h6" gutterBottom>Filters</Typography>
+        <Box sx={{ width: 280 }}>
           <FilterContent />
         </Box>
       </Drawer>
-
-      {/* Desktop Filters */}
+      {/* Desktop Filters Sidebar */}
       <Paper
         elevation={0}
         sx={{
           width: 280,
           flexShrink: 0,
           display: { xs: 'none', sm: 'block' },
-          p: 3,
           borderRight: '1px solid #eee',
           height: 'calc(100vh - 64px)',
           position: 'sticky',
@@ -322,55 +417,39 @@ const Products = () => {
           overflowY: 'auto'
         }}
       >
-        <Typography variant="h6" gutterBottom>Filters</Typography>
         <FilterContent />
       </Paper>
-
-      {/* Products Grid */}
+      {/* Main Products Grid */}
       <Box sx={{ flex: 1, p: 3 }}>
         <Container maxWidth="xl">
-          {/* Header */}
+          {/* Header & Breadcrumbs */}
           <Box sx={{ mb: 4 }}>
             <Breadcrumbs sx={{ mb: 2 }}>
-              <Link underline="hover" color="inherit" href="/">
+              <MUILink underline="hover" color="inherit" href="/">
                 Home
-              </Link>
+              </MUILink>
               <Typography color="text.primary">Shop</Typography>
             </Breadcrumbs>
-
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="h4" gutterBottom>
                 All Products
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Star />}
-                >
+                <Button variant="outlined" startIcon={<Star />}>
                   Popular
                 </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<ArrowUpRight />}
-                >
+                <Button variant="outlined" startIcon={<ArrowUpRight />}>
                   Latest
                 </Button>
               </Box>
             </Box>
           </Box>
-
           {/* Mobile Filter Button */}
           <Box sx={{ display: { sm: 'none' }, mb: 2 }}>
-            <Button
-              startIcon={<Filter />}
-              variant="outlined"
-              onClick={() => setDrawerOpen(true)}
-              fullWidth
-            >
+            <Button startIcon={<Filter />} variant="outlined" onClick={() => setDrawerOpen(true)} fullWidth>
               Filters
             </Button>
           </Box>
-
           {/* Products Grid */}
           <Grid container spacing={3}>
             {products.map((product) => (

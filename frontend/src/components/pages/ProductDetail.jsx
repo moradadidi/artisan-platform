@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Container,
   Grid,
@@ -9,7 +9,6 @@ import {
   Rating,
   Chip,
   Divider,
-  TextField,
   Paper,
   Tabs,
   Tab,
@@ -19,41 +18,20 @@ import {
 import { Heart, Minus, Plus, ShoppingCart, Share2, Truck } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
-// Mock product data - replace with actual API call
-const product = {
-  id: 1,
-  name: "Handcrafted Ceramic Vase",
-  price: 59.99,
-  rating: 4.5,
-  reviews: 12,
-  description: "Beautiful handcrafted ceramic vase, perfect for any home decor. Each piece is uniquely made with attention to detail and quality craftsmanship.",
-  images: [
-    "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-    "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-    "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-  ],
-  artisan: "Sarah Miller",
-  category: "Home Decor",
-  tags: ["Handmade", "Ceramic", "Vase"],
-  inStock: true,
-  maxQuantity: 5,
-  specifications: {
-    "Material": "Ceramic",
-    "Dimensions": "10\" x 6\" x 6\"",
-    "Weight": "2.5 lbs",
-    "Color": "Natural White",
-    "Care": "Hand wash only"
-  }
-};
-
 const ProductDetail = () => {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
+  // Initialize product with default properties to avoid undefined errors
+  const [product, setProduct] = useState({
+    images: [],
+    tags: [],
+    specifications: {},
+  });
 
   const handleQuantityChange = (change) => {
-    const newQuantity = Math.max(1, Math.min(product.maxQuantity, quantity + change));
+    const newQuantity = Math.max(1, Math.min(product.maxQuantity || Infinity, quantity + change));
     setQuantity(newQuantity);
   };
 
@@ -66,24 +44,41 @@ const ProductDetail = () => {
     setActiveTab(newValue);
   };
 
+  const fetchProduct = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/products/${id}`);
+      const data = await response.json();
+      setProduct(data);
+      console.log(data);
+    } catch (error) {
+      console.error('Error fetching product:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]); // Only re-run when 'id' changes
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Grid container spacing={4}>
         {/* Product Images */}
         <Grid item xs={12} md={6}>
           <Box sx={{ position: 'relative' }}>
-            <Box
-              component="img"
-              src={product.images[selectedImage]}
-              alt={product.name}
-              sx={{
-                width: '100%',
-                borderRadius: 2,
-                mb: 2,
-                objectFit: 'cover',
-                aspectRatio: '1/1',
-              }}
-            />
+            {product.images && product.images.length > 0 && (
+              <Box
+                component="img"
+                src={product.images[selectedImage]}
+                alt={product.name}
+                sx={{
+                  width: '100%',
+                  borderRadius: 2,
+                  mb: 2,
+                  objectFit: 'cover',
+                  aspectRatio: '1/1',
+                }}
+              />
+            )}
             <ImageList cols={4} gap={8}>
               {product.images.map((image, index) => (
                 <ImageListItem 
@@ -115,13 +110,13 @@ const ProductDetail = () => {
               {product.name}
             </Typography>
             <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              By {product.artisan}
+              By {product.name || 'Unknown Artisan'}
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Rating value={product.rating} precision={0.5} readOnly />
+              <Rating value={product.rating ? product.rating  : 4 } precision={0.5} readOnly />
               <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({product.reviews} reviews)
+                ({product.reviews || 0} reviews)
               </Typography>
             </Box>
 
@@ -130,12 +125,8 @@ const ProductDetail = () => {
             </Typography>
 
             <Box sx={{ my: 2 }}>
-              {product.tags.map((tag) => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  sx={{ mr: 1, mb: 1 }}
-                />
+              {product.tags?.map((tag) => (
+                <Chip key={tag} label={tag} sx={{ mr: 1, mb: 1 }} />
               ))}
             </Box>
 
@@ -171,13 +162,13 @@ const ProductDetail = () => {
                   </Typography>
                   <IconButton
                     onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= product.maxQuantity}
+                    disabled={quantity >= (product.maxQuantity || Infinity)}
                   >
                     <Plus size={20} />
                   </IconButton>
                 </Box>
                 <Typography variant="body2" color="text.secondary">
-                  {product.maxQuantity} items available
+                  {product.maxQuantity || 0} items available
                 </Typography>
               </Box>
 
@@ -243,7 +234,7 @@ const ProductDetail = () => {
             <Box sx={{ p: 3 }}>
               {activeTab === 0 && (
                 <Grid container spacing={2}>
-                  {Object.entries(product.specifications).map(([key, value]) => (
+                  {Object.entries(product.specifications || {}).map(([key, value]) => (
                     <Grid item xs={12} sm={6} key={key}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography color="text.secondary">{key}</Typography>

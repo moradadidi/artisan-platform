@@ -1,59 +1,157 @@
 import { useState, useEffect } from 'react';
-import { Container, Grid, Typography, Card, CardMedia, CardContent, Box, Button, Rating, IconButton, Chip } from '@mui/material';
-import { Heart, ShoppingCart, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import {
+  Container,
+  Grid,
+  Typography,
+  Card,
+  CardMedia,
+  CardContent,
+  Box,
+  Button,
+  IconButton,
+  Chip,
+  Avatar,
+  Rating,
+  Fade,
+  Drawer,
+  Slider,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Divider,
+  Breadcrumbs,
+  Paper,
+  InputBase,
+  Tooltip,
+} from '@mui/material';
+import {
+  Heart,
+  ShoppingCart,
+  ArrowRight,
+  MapPin,
+  Filter,
+  Search,
+  Star,
+} from 'lucide-react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
-// Sample data until API is connected
-const sampleProducts = [
-  {
-    id: 1,
-    name: "Handcrafted Vase",
-    price: 59.99,
-    rating: 4.5,
-    reviews: 12,
-    image: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-    artisan: "Sarah Miller",
-    description: "Beautiful handcrafted ceramic vase, perfect for any home decor.",
-    tags: ["Handmade", "Ceramic", "Vase"],
-    isFavorite: false
-  },
-  {
-    id: 2,
-    name: "Ceramic Bowl Set",
-    price: 45.99,
-    rating: 4.8,
-    reviews: 28,
-    image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=400",
-    artisan: "John Doe",
-    description: "Set of 4 handmade ceramic bowls, each uniquely crafted.",
-    tags: ["Handmade", "Ceramic", "Kitchen"],
-    isFavorite: true
-  },
-  {
-    id: 3,
-    name: "Woven Basket",
-    price: 29.99,
-    rating: 4.2,
-    reviews: 18,
-    image: "https://images.unsplash.com/photo-1606293926075-91acedf0f1dc?auto=format&fit=crop&w=400",
-    artisan: "Emma Wilson",
-    description: "Handwoven basket made from sustainable materials.",
-    tags: ["Handmade", "Basket", "Storage"],
-    isFavorite: false
-  }
-];
-
-const ProductCard = ({ product, onFavoriteToggle, onAddToCart }) => {
+/** Hero Banner Component */
+const HeroBanner = () => {
+  const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
 
-  const handleProductClick = () => {
-    navigate(`/products/${product.id}`);
-  };
+  useEffect(() => {
+    setLoaded(true);
+  }, []);
 
   return (
-    <Card 
-      sx={{ 
+    <Box
+      sx={{
+        position: 'relative',
+        height: { xs: 300, md: 500 },
+        mb: 6,
+        borderRadius: 2,
+        overflow: 'hidden',
+      }}
+    >
+      <CardMedia
+        component="img"
+        image="../../../public/valeria.jpg"
+        alt="Hero Banner"
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          filter: 'brightness(0.7)',
+          transition: 'transform 0.5s ease',
+          '&:hover': { transform: 'scale(1.05)' },
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          bgcolor: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          p: 2,
+        }}
+      >
+        <Fade in={loaded} timeout={1000}>
+          <Box>
+            <Typography
+              variant="h3"
+              component="h1"
+              sx={{ fontWeight: 700, mb: 2, color: 'white' }}
+            >
+              Discover Unique Artisanal Creations
+            </Typography>
+            <Typography variant="subtitle1" sx={{ color: 'white', mb: 4 }}>
+              Handcrafted pieces made with passion and precision.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                size="large"
+                color="primary"
+                onClick={() => navigate('/shop')}
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1rem',
+                }}
+              >
+                Shop Now
+              </Button>
+              <Button
+                variant="outlined"
+                size="large"
+                sx={{
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  color: 'white',
+                  borderColor: 'white',
+                  '&:hover': { borderColor: 'white' },
+                }}
+                onClick={() => navigate('/collections')}
+              >
+                Explore Collections
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+      </Box>
+    </Box>
+  );
+};
+
+/** Product Card Component */
+const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => {
+  const navigate = useNavigate();
+
+  const mainImage =
+    product.images && product.images.length > 0 ? product.images[0] : '/default.png';
+  const userData = product.user || {};
+  const userName = userData.name || 'Unknown Artisan';
+  const userAddress = userData.adresse || 'No address provided';
+  const userProfilePic = userData.profilePicture || '/default.png';
+
+  return (
+    <Card
+      sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -61,96 +159,123 @@ const ProductCard = ({ product, onFavoriteToggle, onAddToCart }) => {
         cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+        },
       }}
-      onClick={handleProductClick}
     >
       <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
           height="260"
-          image={product.image}
+          image={mainImage}
           alt={product.name}
-          sx={{ 
+          sx={{
             objectFit: 'cover',
             transition: 'transform 0.3s ease-in-out',
-            '&:hover': {
-              transform: 'scale(1.05)'
-            }
+            '&:hover': { transform: 'scale(1.05)' },
           }}
+          onClick={() => navigate(`/products/${product._id}`)}
         />
-        <IconButton
-          onClick={(e) => {
-            e.stopPropagation();
-            onFavoriteToggle(product.id);
-          }}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            backgroundColor: 'white',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            '&:hover': {
+        <Tooltip title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}>
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              onFavoriteToggle(product._id);
+            }}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
               backgroundColor: 'white',
-              transform: 'scale(1.1)'
-            }
-          }}
-        >
-          <Heart 
-            size={20} 
-            fill={product.isFavorite ? '#ff4081' : 'none'}
-            color={product.isFavorite ? '#ff4081' : '#666'}
-          />
-        </IconButton>
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              '&:hover': { backgroundColor: 'white', transform: 'scale(1.1)' },
+            }}
+          >
+            <Heart
+              size={20}
+              fill={isFavorite ? '#ff4081' : 'none'}
+              color={isFavorite ? '#ff4081' : '#666'}
+            />
+          </IconButton>
+        </Tooltip>
       </Box>
       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ mb: 1 }}>
-          {product.tags.map((tag) => (
-            <Chip
-              key={tag}
-              label={tag}
-              size="small"
-              sx={{ mr: 0.5, mb: 0.5 }}
-            />
-          ))}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 2,
+            cursor: 'pointer',
+            '&:hover .artisan-name': { color: 'primary.main' },
+          }}
+          onClick={() => {
+            if (userData._id) navigate(`/artisans/${userData._id}`);
+          }}
+        >
+          <Avatar
+            src={userProfilePic}
+            alt={userName}
+            sx={{ width: 40, height: 40, mr: 1 }}
+          />
+          <Box>
+            <Typography
+              variant="subtitle2"
+              className="artisan-name"
+              sx={{ transition: 'color 0.2s ease-in-out' }}
+            >
+              {userName}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <MapPin size={14} color="#666" />
+              <Typography variant="caption" color="text.secondary">
+                {userAddress}
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ ml: 'auto', textAlign: 'right' }}>
+            <Rating value={product.rating || 3} size="small" readOnly />
+            <Typography variant="caption" color="text.secondary" display="block">
+              {product.reviews || 0} reviews
+            </Typography>
+          </Box>
         </Box>
-        <Typography variant="h6" gutterBottom>
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+          onClick={() => navigate(`/products/${product._id}`)}
+        >
           {product.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          By {product.artisan}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {product.category && (
+          <Box sx={{ mb: 1 }}>
+            <Chip label={product.category} size="small" />
+          </Box>
+        )}
+        <Typography variant="body2" color="text.secondary" paragraph noWrap>
           {product.description}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Rating value={product.rating} precision={0.5} size="small" readOnly />
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            ({product.reviews})
-          </Typography>
-        </Box>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mt: 'auto'
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mt: 'auto',
+          }}
+        >
           <Typography variant="h6" color="primary">
             ${product.price}
           </Typography>
-          <IconButton 
+          <IconButton
             color="primary"
             onClick={(e) => {
               e.stopPropagation();
-              onAddToCart(product.id);
+              onAddToCart(product._id);
             }}
             sx={{
               backgroundColor: 'primary.main',
               color: 'white',
-              '&:hover': {
-                backgroundColor: 'primary.dark',
-              }
+              '&:hover': { backgroundColor: 'primary.dark' },
             }}
           >
             <ShoppingCart size={20} />
@@ -161,107 +286,197 @@ const ProductCard = ({ product, onFavoriteToggle, onAddToCart }) => {
   );
 };
 
-const ProductSection = ({ title, products, onViewAll }) => {
-  const [favorites, setFavorites] = useState({});
-
-  const handleFavoriteToggle = (productId) => {
-    setFavorites(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
-
-  const handleAddToCart = (productId) => {
-    // Implement cart functionality
-    console.log('Added to cart:', productId);
-  };
+/** Product Section Component */
+const ProductSection = ({ title, products, favorites, onFavoriteToggle, onViewAll, onAddToCart }) => {
+  const navigate = useNavigate();
 
   return (
     <Box my={4}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 3,
-        flexWrap: 'wrap',
-        gap: 2
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
         <Typography variant="h4" color="text.primary">
           {title}
         </Typography>
-        <Button 
-          variant="outlined" 
-          color="primary" 
+        <Button
+          variant="outlined"
+          color="primary"
           endIcon={<ArrowRight />}
           onClick={onViewAll}
-          sx={{ 
-            borderRadius: 2,
-            textTransform: 'none',
-            px: 3
-          }}
+          sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
         >
           View All
         </Button>
       </Box>
       <Grid container spacing={3}>
-        {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product.id}>
-            <ProductCard 
-              product={{
-                ...product,
-                isFavorite: favorites[product.id]
-              }}
-              onFavoriteToggle={handleFavoriteToggle}
-              onAddToCart={handleAddToCart}
-            />
-          </Grid>
-        ))}
+        {products.map((product) => {
+          // Determine if the product is favorited by checking the favorites map.
+          const isFavorite = !!favorites[product._id]?.isFavorite;
+          return (
+            <Grid item xs={12} sm={6} md={4} key={product._id}>
+              <ProductCard
+                product={product}
+                isFavorite={isFavorite}
+                onFavoriteToggle={onFavoriteToggle}
+                onAddToCart={onAddToCart}
+              />
+            </Grid>
+          );
+        })}
       </Grid>
     </Box>
   );
 };
 
+/** Main Home Component */
 const Home = () => {
   const navigate = useNavigate();
-  const [latestProducts, setLatestProducts] = useState([...sampleProducts]);
-  const [popularProducts, setPopularProducts] = useState([...sampleProducts]);
+  const user = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
 
+  const [latestProducts, setLatestProducts] = useState([]);
+  const [popularProducts, setPopularProducts] = useState([]);
+  // Favorites state (an object mapping product _id to favorite info) is lifted to Home.
+  const [favorites, setFavorites] = useState({});
+
+  // Fetch favorites for the logged-in user.
   useEffect(() => {
-    const fetchLatestProducts = async () => {
+    const fetchFavorites = async () => {
+      if (!user) return;
       try {
-        const response = await axios.get('/api/products/latest');
-        setLatestProducts(Array.isArray(response.data) ? response.data : sampleProducts);
+        const response = await axios.get(`http://127.0.0.1:5000/api/favorites/${user._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const favoritesMap = {};
+        response.data.forEach((fav) => {
+          favoritesMap[fav.product._id] = {
+            favoriteId: fav._id,
+            isFavorite: true,
+          };
+        });
+        setFavorites(favoritesMap);
       } catch (error) {
-        console.error('Error fetching latest products:', error);
-        setLatestProducts([...sampleProducts]);
+        console.error('Error fetching favorites:', error);
       }
     };
 
-    const fetchPopularProducts = async () => {
+    fetchFavorites();
+  }, [user, token]);
+
+  // Handle favorite toggle (add or remove) using the same functions as in your Favorites page.
+  const handleFavoriteToggle = async (productId) => {
+    if (!user) {
+      toast.error('You must be logged in to favorite products.');
+      return;
+    }
+    // Check if the product is already favorited.
+    const isCurrentlyFav = !!favorites[productId]?.isFavorite;
+    if (isCurrentlyFav) {
+      // Remove favorite.
       try {
-        const response = await axios.get('/api/products/popular');
-        setPopularProducts(Array.isArray(response.data) ? response.data : sampleProducts);
+        const favoriteId = favorites[productId].favoriteId;
+        await axios.delete(`http://127.0.0.1:5000/api/favorites/${favoriteId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Removed from favorites');
+        setFavorites((prev) => {
+          const updated = { ...prev };
+          delete updated[productId];
+          return updated;
+        });
       } catch (error) {
-        console.error('Error fetching popular products:', error);
-        setPopularProducts([...sampleProducts]);
+        console.error('Error removing favorite:', error);
+        toast.error('Error removing favorite. Please try again.');
+      }
+    } else {
+      // Add favorite.
+      try {
+        const response = await axios.post(
+          `http://127.0.0.1:5000/api/favorites`,
+          { product: productId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success('Added to favorites');
+        setFavorites((prev) => ({
+          ...prev,
+          [productId]: { favoriteId: response.data._id, isFavorite: true },
+        }));
+      } catch (error) {
+        console.error('Error adding favorite:', error);
+        toast.error('Error adding to favorites. Please try again.');
+      }
+    }
+  };
+
+  // Fetch products for both sections.
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/api/products');
+        // For simplicity, assign the same data to both sections.
+        setLatestProducts(response.data);
+        setPopularProducts(response.data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setLatestProducts([]);
+        setPopularProducts([]);
       }
     };
 
-    fetchLatestProducts();
-    fetchPopularProducts();
+    fetchProducts();
   }, []);
 
+  // Add to cart handler.
+  const handleAddToCart = async (productId) => {
+    if (!user) {
+      toast.error('You must be logged in to add products to your cart.');
+      return;
+    }
+    // Find the product in the latestProducts array.
+    const product = latestProducts.find((p) => p._id === productId);
+    if (!product) return;
+    const payload = {
+      customerId: user._id,
+      products: [{ productId, quantity: 1 }],
+      totalAmount: product.price,
+    };
+
+    try {
+      await axios.post('http://127.0.0.1:5000/api/cart', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Error adding to cart. Please try again.');
+    }
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 8, mb: 4 }}>
-      <ProductSection 
-        title="Latest Arrivals" 
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <HeroBanner />
+      <ProductSection
+        title="Latest Arrivals"
         products={latestProducts}
-        onViewAll={() => navigate('/products?sort=latest')}
+        favorites={favorites}
+        onFavoriteToggle={handleFavoriteToggle}
+        onAddToCart={handleAddToCart}
+        onViewAll={() => navigate('/shop')}
       />
-      <ProductSection 
-        title="Most Popular" 
+      <ProductSection
+        title="Most Popular"
         products={popularProducts}
-        onViewAll={() => navigate('/products?sort=popular')}
+        favorites={favorites}
+        onFavoriteToggle={handleFavoriteToggle}
+        onAddToCart={handleAddToCart}
+        onViewAll={() => navigate('/shop')}
       />
     </Container>
   );

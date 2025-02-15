@@ -6,6 +6,7 @@ const UserAuthContext = createContext({
   token: null,
   login: () => {},
   logout: () => {},
+  updateProfilePicture: () => {},
 });
 
 export const UserAuthProvider = ({ children }) => {
@@ -40,10 +41,20 @@ export const UserAuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    
+  };
+
+  // Update Profile Picture Function
+  const updateProfilePicture = (newImageUrl) => {
+    if (user) {
+      const updatedUser = { ...user, profilePicture: newImageUrl };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
   };
 
   return (
-    <UserAuthContext.Provider value={{ user, token, login, logout }}>
+    <UserAuthContext.Provider value={{ user, token, login, logout, updateProfilePicture }}>
       {children}
     </UserAuthContext.Provider>
   );

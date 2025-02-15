@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate , useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ColorModeContext, useMode } from "./theme";
 import { CssBaseline, ThemeProvider } from "@mui/material";
@@ -20,6 +20,14 @@ import Products from './components/pages/Product';
 import { UserAuthProvider } from "./UserAuthContext";
 import ProductDetail from "./components/pages/ProductDetail";
 import Favorites from "./components/pages/Favorites";
+import ArtisanProfile from "./components/pages/ArtisanProfile";
+import  UserDash from "./components/artisanDash/ArtisanProducts";
+import ArtisanSidebar from "./scenes/global/ArtisanSidebar";
+import ArtisanDash from "./components/artisanDash/ArtisanDash";
+import Reviews from "./components/artisanDash/Reviews";
+import Orders from "./components/artisanDash/Orders";
+import Profile from "./components/artisanDash/Profile";
+import "./App.css";
 
 /** Private Route Check */
 function PrivateRoute({ children }) {
@@ -47,12 +55,41 @@ function DashboardLayout({ children }) {
   );
 }
 
+function ArtisanDashboardLayout({ children }) {
+  const location = useLocation();
+
+  const getPageTitle = (pathname) => {
+    return pathname.substring(1).charAt(0).toUpperCase() + pathname.slice(2) || 'Dashboard';
+  };
+
+  // const isSidebarOpen = location.pathname === '/dashboard';
+  return (
+      <div className="min-h-screen bg-[#FAFAFA]">
+      <ArtisanSidebar />
+      <div className={`lg:ml-64 transition-margin duration-300 ease-in-out `}>
+        <header className="bg-white border-b border-gray-100">
+          <div className="px-8 py-6">
+            <h2 className="text-2xl font-semibold text-gray-800">
+              {getPageTitle(location.pathname)}
+            </h2>
+          </div>
+        </header>
+        <main className="w-full max-w-7xl mx-auto px-8 py-6">
+          
+        {children}
+
+        </main>
+      </div>
+      </div>
+  );
+}
+
 /** Layout for Public Pages (Navbar Only) */
 function NavbarLayout({ children }) {
   return (
     <>
       <Navbar />
-      <main className="container mx-auto px-4 py-20">
+      <main className="content container mx-auto  py-16">
         {children}
       </main>
     </>
@@ -75,10 +112,14 @@ function AppContent() {
       <Route path="/discover" element={<NavbarLayout><Discover /></NavbarLayout>} />
       <Route path="/artisans" element={<NavbarLayout><Artisans /></NavbarLayout>} />
       <Route path="/cart" element={<NavbarLayout><Cart /></NavbarLayout>} />
-      <Route path="/favorites" element={<NavbarLayout><Favorites /></NavbarLayout>} />
-
+      <Route path="/favorites" element={<ArtisanDashboardLayout><Favorites /></ArtisanDashboardLayout>} />
+      <Route path="/orders" element={<ArtisanDashboardLayout><Orders /></ArtisanDashboardLayout>} />
+      <Route path="/reviews" element={<ArtisanDashboardLayout><Reviews /></ArtisanDashboardLayout>} />
+      <Route path="/artisan-dashboard" element={<ArtisanDashboardLayout><ArtisanDash /></ArtisanDashboardLayout>} />
+      <Route path="/profile" element={<ArtisanDashboardLayout><Profile /></ArtisanDashboardLayout>} />
+      <Route path="/artisans/:id" element={<NavbarLayout><ArtisanProfile /></NavbarLayout>} />
       <Route path="/products/:id" element={<NavbarLayout><ProductDetail /></NavbarLayout>} />
-
+      <Route path="/my-products" element={<ArtisanDashboardLayout><UserDash /></ArtisanDashboardLayout>} />
       {/* Private Routes (Dashboard) */}
       <Route path="/dashboard" element={<PrivateRoute><DashboardLayout><Dashboard /></DashboardLayout></PrivateRoute>} />
       <Route path="/products" element={<PrivateRoute><DashboardLayout><ProductTable /></DashboardLayout></PrivateRoute>} />

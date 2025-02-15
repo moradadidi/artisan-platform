@@ -1,9 +1,30 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import { User, validateData } from "../models/user.js";
-
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../cloudinaryConfig.js";
 const userRouter = express.Router();
 
+
+const storage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+      folder: "profilePictures", // Folder where profile pictures will be stored
+      allowed_formats: ["jpg", "png", "jpeg"],
+    },
+  });
+  
+  const upload = multer({ storage });
+  
+  userRouter.post("/upload", upload.single("image"), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+    res.json({ imageUrl: req.file.path }); // Cloudinary returns the image URL
+  });
+
+  
 // Register a new user
 userRouter.post("/", async (req, res) => {
     try {
@@ -30,6 +51,7 @@ userRouter.post("/", async (req, res) => {
             password: hashedPassword,
             isAdmin: req.body.isAdmin || false,
             role: req.body.role || "user",
+            profilePicture: req.body.profilePicture || "./default.png",
         });
 
         // Save user to database
@@ -39,6 +61,35 @@ userRouter.post("/", async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+userRouter.put("/:id", upload.single("profilePicture"), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) user.email = req.body.email;
+    if (req.body.phoneNumber) user.phoneNumber = req.body.phoneNumber;
+    if (req.body.address) user.address = req.body.address;
+    if (req.body.bio) user.bio = req.body.bio;
+    if (req.body.role) user.role = req.body.role;
+    if (req.body.isAdmin !== undefined) user.isAdmin = req.body.isAdmin;
+
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    if (req.file) {
+      user.profilePicture = req.file.path;
+    }
+
+    const updatedUser = await user.save();
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default userRouter;

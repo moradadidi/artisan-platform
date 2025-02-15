@@ -10,7 +10,11 @@ import authRouter from './routes/auth.js';
 import userRouter from './routes/user.js';
 import usersRouter from './routes/users.js';
 import productRouter from './routes/product.js';
-import uploadRouter from './routes/upload.js'; // Added image upload route
+import orderRouter from './routes/order.js';
+import cartRouter from './routes/cart.js';
+import uploadRouter from './routes/uploadRoutes.js'; 
+import profileUploadRouter from './routes/profileUploadRouter.js';
+import favoriteRouter from './routes/favorite.js'; 
 
 // Load Environment Variables
 dotenv.config(); 
@@ -18,7 +22,7 @@ dotenv.config();
 const app = express();
 
 // 🛠️ Middleware
-app.use(express.json()); // Ensure JSON parsing before routes
+app.use(express.json()); 
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
@@ -33,7 +37,12 @@ app.use('/api/login', authRouter);
 app.use('/api/register', userRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/products', productRouter);
-app.use('/api/upload', uploadRouter); // Handle file uploads
+app.use('/api/orders', orderRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/upload', uploadRouter); 
+app.use('/api/profile/upload', profileUploadRouter);
+app.use('/api/favorites', favoriteRouter);
+
 
 // 🌍 Server Setup
 const PORT = process.env.PORT || 5000;

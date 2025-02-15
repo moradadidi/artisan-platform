@@ -13,11 +13,14 @@ body,
   height: 100%;
   width: 100%;
   font-family: "Source Sans Pro", sans-serif;
+  
 }
 
 .app {
   display: flex;
   position: relative;
+  padding: 0;
+  margin: 0;
 }
 
 ::-webkit-scrollbar {
@@ -31,10 +34,10 @@ body,
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #eeff00;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #eeff00;
 }

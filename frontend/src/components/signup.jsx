@@ -16,6 +16,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
+// import { profile } from 'console';
 
 // --- Logo Component ---
 const Logo = () => (
@@ -36,6 +37,7 @@ export default function RegisterForm() {
     password: '',
     confirmPassword: '',
     role: '',
+    profilePicture: './default.png',
   });
   const [loading, setLoading] = useState(false);
 

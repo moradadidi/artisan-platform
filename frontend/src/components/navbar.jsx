@@ -37,6 +37,9 @@ import {
   Bell,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useEffect } from 'react';
+import { useUserAuth } from '../UserAuthContext';
 
 function HideOnScroll({ children }) {
   const trigger = useScrollTrigger();
@@ -55,7 +58,11 @@ const Navbar = () => {
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const userParsed = JSON.parse(localStorage.getItem('user'));
+  const [countCart , setCountCart] = useState(0);
+  const {user} = useUserAuth();
 
+console.log("the user :" , user)
   const isActiveRoute = (path) => location.pathname === path;
 
   const handleProfileClick = (event) => {
@@ -74,9 +81,21 @@ const Navbar = () => {
     setNotificationsMenu(null);
   };
 
+  const fetchCountCart = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/cart/count/${userParsed._id}`);
+      console.log(response.data);
+      setCountCart(response.data);
+    } catch (error) {
+      console.error('Error fetching cart count:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCountCart();
+  }, []);
   const handleLogout = () => {
     handleProfileClose();
-    // Implement logout logic
   };
 
   const navItems = [
@@ -220,7 +239,7 @@ const Navbar = () => {
                 ml: { xs: 0, md: 'auto' },
                 flexShrink: 0
               }}>
-                <IconButton 
+                {/* <IconButton 
                   component={Link} 
                   to="/favorites"
                   sx={{ 
@@ -231,7 +250,7 @@ const Navbar = () => {
                   <Badge badgeContent={0} color="error">
                     <Heart size={20} />
                   </Badge>
-                </IconButton>
+                </IconButton> */}
                 <IconButton 
                   component={Link} 
                   to="/cart"
@@ -241,7 +260,7 @@ const Navbar = () => {
                   }}
                 >
                   <Badge 
-                    badgeContent={2} 
+                    badgeContent={countCart} 
                     color="error"
                     sx={{
                       '& .MuiBadge-badge': {
@@ -283,19 +302,28 @@ const Navbar = () => {
                     padding: { xs: '6px', sm: '8px' },
                   }}
                 >
-                  <Avatar 
-                    sx={{ 
-                      width: { xs: 28, sm: 32 }, 
-                      height: { xs: 28, sm: 32 },
-                      backgroundColor: 'primary.main'
-                    }}
-                  >
-                    <User size={18} />
-                  </Avatar>
+                  
+                   <Box
+                          component="img"
+                          src={userParsed.profilePicture
+                            ?? "./default.png"}
+                          alt={`user image`}
+                          sx={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            window.location.href = "/artisan-dashboard"; 
+                          }
+                        }
+                        />
                 </IconButton>
 
                 {/* Profile Dropdown Menu */}
-                <Menu
+                {/* <Menu
                   anchorEl={profileMenu}
                   open={Boolean(profileMenu)}
                   onClose={handleProfileClose}
@@ -318,10 +346,10 @@ const Navbar = () => {
                 >
                   <Box sx={{ px: 2, py: 1.5 }}>
                     <Typography variant="subtitle1" noWrap>
-                      John Doe
+                    {userParsed?.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap>
-                      john.doe@example.com
+                    {userParsed?.email}
                     </Typography>
                   </Box>
                   <Divider />
@@ -337,11 +365,11 @@ const Navbar = () => {
                     </ListItemIcon>
                     My Orders
                   </MenuItem>
-                  <MenuItem onClick={() => navigate('/payment-methods')}>
+                  <MenuItem onClick={() => navigate('/userdash')}>
                     <ListItemIcon>
                       <CreditCard size={20} />
                     </ListItemIcon>
-                    Payment Methods
+                    Dashboard
                   </MenuItem>
                   <MenuItem onClick={() => navigate('/settings')}>
                     <ListItemIcon>
@@ -356,7 +384,7 @@ const Navbar = () => {
                     </ListItemIcon>
                     Logout
                   </MenuItem>
-                </Menu>
+                </Menu> */}
               </Box>
             </Toolbar>
           </Container>
@@ -426,9 +454,9 @@ const Navbar = () => {
                 <User size={24} />
               </Avatar>
               <Box>
-                <Typography variant="subtitle1">John Doe</Typography>
+                <Typography variant="subtitle1">{user?.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  john.doe@example.com
+                  {user?.email}
                 </Typography>
               </Box>
             </Box>

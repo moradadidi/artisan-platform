@@ -13,6 +13,8 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useUserAuth } from '../UserAuthContext';
+
 
 
 export default function LoginForm() {
@@ -22,6 +24,7 @@ export default function LoginForm() {
     password: '',
   });
   const [loading, setLoading] = useState(false);
+  const { login } = useUserAuth();
 
     const navigate = useNavigate();
 
@@ -56,7 +59,7 @@ export default function LoginForm() {
 
       }else{
         navigate('/');}
-
+      login(response.data.user, response.data.token);
       // Optionally redirect to another page
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
