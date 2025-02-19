@@ -13,6 +13,7 @@ import {
   Avatar,
   Rating,
   Fade,
+  useTheme,
   Drawer,
   Slider,
   FormGroup,
@@ -23,6 +24,7 @@ import {
   Paper,
   InputBase,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import {
   Heart,
@@ -36,6 +38,7 @@ import {
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { tokens } from '../../theme';
 
 /** Hero Banner Component */
 const HeroBanner = () => {
@@ -58,7 +61,7 @@ const HeroBanner = () => {
     >
       <CardMedia
         component="img"
-        image="../../../public/valeria.jpg"
+        image="./valeria.jpg"
         alt="Hero Banner"
         sx={{
           width: '100%',
@@ -141,7 +144,8 @@ const HeroBanner = () => {
 /** Product Card Component */
 const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => {
   const navigate = useNavigate();
-
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
   const mainImage =
     product.images && product.images.length > 0 ? product.images[0] : '/default.png';
   const userData = product.user || {};
@@ -247,9 +251,11 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
         >
           {product.name}
         </Typography>
-        {product.category && (
+        {product.tags && product.tags.length > 0 && (
           <Box sx={{ mb: 1 }}>
-            <Chip label={product.category} size="small" />
+            {product.tags.map((tag) => (
+              <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+            ))}
           </Box>
         )}
         <Typography variant="body2" color="text.secondary" paragraph noWrap>
@@ -273,9 +279,9 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
               onAddToCart(product._id);
             }}
             sx={{
-              backgroundColor: 'primary.main',
+              backgroundColor: `${colors.yellowAccent[400]}`,
               color: 'white',
-              '&:hover': { backgroundColor: 'primary.dark' },
+              '&:hover': { backgroundColor: `${colors.yellowAccent[500]}` },
             }}
           >
             <ShoppingCart size={20} />
@@ -292,17 +298,8 @@ const ProductSection = ({ title, products, favorites, onFavoriteToggle, onViewAl
 
   return (
     <Box my={4}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          flexWrap: 'wrap',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4" color="text.primary">
+      <Box className="flex flex-wrap justify-between items-center mb-3 gap-2">
+        <Typography variant="h4" className="text-gray-800 font-bold">
           {title}
         </Typography>
         <Button
@@ -310,14 +307,13 @@ const ProductSection = ({ title, products, favorites, onFavoriteToggle, onViewAl
           color="primary"
           endIcon={<ArrowRight />}
           onClick={onViewAll}
-          sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
+          className="rounded-md text-base px-4"
         >
           View All
         </Button>
       </Box>
       <Grid container spacing={3}>
         {products.map((product) => {
-          // Determine if the product is favorited by checking the favorites map.
           const isFavorite = !!favorites[product._id]?.isFavorite;
           return (
             <Grid item xs={12} sm={6} md={4} key={product._id}>
@@ -337,14 +333,19 @@ const ProductSection = ({ title, products, favorites, onFavoriteToggle, onViewAl
 
 /** Main Home Component */
 const Home = () => {
+  useEffect(() => {
+    document.title = 'Home - Rarely';
+  }, []);
+
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  // Initialize user in state so it doesn't change on every render.
+  const [user] = useState(() => JSON.parse(sessionStorage.getItem('user')));
+  const token = sessionStorage.getItem('token');
 
   const [latestProducts, setLatestProducts] = useState([]);
   const [popularProducts, setPopularProducts] = useState([]);
-  // Favorites state (an object mapping product _id to favorite info) is lifted to Home.
   const [favorites, setFavorites] = useState({});
+  const [loading, setLoading] = useState(true);
 
   // Fetch favorites for the logged-in user.
   useEffect(() => {
@@ -370,16 +371,14 @@ const Home = () => {
     fetchFavorites();
   }, [user, token]);
 
-  // Handle favorite toggle (add or remove) using the same functions as in your Favorites page.
+  // Handle favorite toggle.
   const handleFavoriteToggle = async (productId) => {
     if (!user) {
       toast.error('You must be logged in to favorite products.');
       return;
     }
-    // Check if the product is already favorited.
     const isCurrentlyFav = !!favorites[productId]?.isFavorite;
     if (isCurrentlyFav) {
-      // Remove favorite.
       try {
         const favoriteId = favorites[productId].favoriteId;
         await axios.delete(`http://127.0.0.1:5000/api/favorites/${favoriteId}`, {
@@ -396,7 +395,6 @@ const Home = () => {
         toast.error('Error removing favorite. Please try again.');
       }
     } else {
-      // Add favorite.
       try {
         const response = await axios.post(
           `http://127.0.0.1:5000/api/favorites`,
@@ -420,13 +418,14 @@ const Home = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:5000/api/products');
-        // For simplicity, assign the same data to both sections.
         setLatestProducts(response.data);
         setPopularProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);
         setLatestProducts([]);
         setPopularProducts([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -439,7 +438,6 @@ const Home = () => {
       toast.error('You must be logged in to add products to your cart.');
       return;
     }
-    // Find the product in the latestProducts array.
     const product = latestProducts.find((p) => p._id === productId);
     if (!product) return;
     const payload = {
@@ -459,8 +457,26 @@ const Home = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Container maxWidth="lg" className="mt-4 mb-4">
+        {/* Skeleton for HeroBanner */}
+        <Skeleton variant="rectangular" height={300} className="mb-6 rounded" />
+        {/* Skeleton for section header */}
+        <Skeleton variant="text" width="30%" height={40} className="mb-4" />
+        <Grid container spacing={3}>
+          {Array.from(new Array(6)).map((_, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Skeleton variant="rectangular" height={350} className="rounded" />
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    );
+  }
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" className="mt-4 mb-4">
       <HeroBanner />
       <ProductSection
         title="Latest Arrivals"

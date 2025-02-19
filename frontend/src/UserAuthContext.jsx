@@ -13,11 +13,11 @@ export const UserAuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
-  // Load user and token from localStorage on app start
+  // Load user and token from sessionStorage on app start
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem("user");
-      const storedToken = localStorage.getItem("token");
+      const storedUser = sessionStorage.getItem("user");
+      const storedToken = sessionStorage.getItem("token");
       if (storedUser && storedToken) {
         setUser(JSON.parse(storedUser));
         setToken(storedToken);
@@ -31,16 +31,16 @@ export const UserAuthProvider = ({ children }) => {
   const login = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("token", authToken);
+    sessionStorage.setItem("user", JSON.stringify(userData));
+    sessionStorage.setItem("token", authToken);
   };
 
   // Logout Function
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("token");
     
   };
 
@@ -49,7 +49,7 @@ export const UserAuthProvider = ({ children }) => {
     if (user) {
       const updatedUser = { ...user, profilePicture: newImageUrl };
       setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
     }
   };
 

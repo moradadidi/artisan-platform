@@ -41,6 +41,10 @@ const categories = [
 ];
 
 const UserDash = () => {
+  useEffect(() => {
+    document.title = 'My Products - Rarely';
+  }, []);
+
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -61,10 +65,12 @@ const UserDash = () => {
   // File uploads in edit dialog:
   const [editProductImages, setEditProductImages] = useState([]);
 
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user'));
+  const token = sessionStorage.getItem('token');
+  const user = JSON.parse(sessionStorage.getItem('user'));
 
-  // Fetch user's products
+  // ---------------------------
+  // Fetch Products Data
+  // ---------------------------
   const fetchProducts = async () => {
     try {
       const response = await axios.get(`http://127.0.0.1:5000/api/products/user/${user._id}`, {
@@ -80,28 +86,29 @@ const UserDash = () => {
     fetchProducts();
   }, []);
 
-  // Handle file selection for add form
+  // ---------------------------
+  // File Handlers
+  // ---------------------------
   const handleNewProductImageChange = (e) => {
     setNewProductImages(Array.from(e.target.files));
   };
 
-  // Handle file selection for edit form
   const handleEditProductImageChange = (e) => {
     setEditProductImages(Array.from(e.target.files));
   };
 
-  // Handle adding a product with multipart/form-data (including tags)
+  // ---------------------------
+  // Add Product Handler
+  // ---------------------------
   const handleAddProduct = async () => {
     try {
       const formData = new FormData();
       formData.append('name', newProduct.name);
       formData.append('price', newProduct.price);
-      // For a single category, we just pass the string.
       formData.append('category', newProduct.category);
-      formData.append('countInStock', newProduct.stock); // maps stock to countInStock
+      formData.append('countInStock', newProduct.stock);
       formData.append('description', newProduct.description);
       formData.append('user', user._id);
-      // Append tags as a comma-separated string
       formData.append('tags', newProduct.tags.join(','));
       newProductImages.forEach((file) => formData.append('images', file));
       await axios.post('http://127.0.0.1:5000/api/products', formData, {
@@ -121,7 +128,9 @@ const UserDash = () => {
     }
   };
 
-  // Handle editing a product
+  // ---------------------------
+  // Edit Product Handler
+  // ---------------------------
   const handleEditProduct = async () => {
     try {
       const formData = new FormData();
@@ -151,7 +160,9 @@ const UserDash = () => {
     }
   };
 
-  // Handle deletion of a product
+  // ---------------------------
+  // Delete Product Handler
+  // ---------------------------
   const handleDelete = async (productId) => {
     try {
       await axios.delete(`http://127.0.0.1:5000/api/products/${productId}`, {
@@ -166,15 +177,31 @@ const UserDash = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', backgroundColor: '#f4f6f8', minHeight: '100vh' }}>
       {/* Main content */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box component="main" sx={{ flexGrow: 1, p: 4, mt: 8 }}>
         <Container maxWidth="lg">
-          <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h4" fontWeight="bold">
+          <Box
+            sx={{
+              mb: 4,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h4" fontWeight="bold" color="primary">
               My Products
             </Typography>
-            <Button variant="contained" startIcon={<Plus size={20} />} onClick={() => setOpenAddDialog(true)}>
+            <Button
+              variant="contained"
+              startIcon={<Plus size={20} />}
+              onClick={() => setOpenAddDialog(true)}
+              sx={{
+                textTransform: 'none',
+                boxShadow: 2,
+                borderRadius: 2,
+              }}
+            >
               Add Product
             </Button>
           </Box>
@@ -186,18 +213,25 @@ const UserDash = () => {
                   elevation={3}
                   sx={{
                     borderRadius: 2,
-                    transition: 'transform 0.3s',
-                    '&:hover': { transform: 'scale(1.02)' },
+                    transition: 'transform 0.3s, box-shadow 0.3s',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      boxShadow: 6,
+                    },
                   }}
                 >
                   <CardMedia
                     component="img"
                     height="200"
-                    image={product.images && product.images[0] ? product.images[0] : 'https://via.placeholder.com/400'}
+                    image={
+                      product.images && product.images[0]
+                        ? product.images[0]
+                        : 'https://via.placeholder.com/400'
+                    }
                     alt={product.name}
                     sx={{ objectFit: 'cover', aspectRatio: '1/1' }}
                   />
-                  <CardContent>
+                  <CardContent sx={{ pt: 2 }}>
                     <Typography variant="h6" gutterBottom noWrap>
                       {product.name}
                     </Typography>
@@ -211,7 +245,13 @@ const UserDash = () => {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <IconButton
                         onClick={() => {
-                          setSelectedProduct({ ...product, stock: product.countInStock });
+                          setSelectedProduct({
+                            ...product,
+                            stock: product.countInStock,
+                            tags: Array.isArray(product.tags)
+                              ? product.tags
+                              : product.tags.split(',').map((t) => t.trim()),
+                          });
                           setOpenEditDialog(true);
                         }}
                         color="primary"
@@ -219,7 +259,11 @@ const UserDash = () => {
                       >
                         <Edit size={18} />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(product._id)} color="error" size="small">
+                      <IconButton
+                        onClick={() => handleDelete(product._id)}
+                        color="error"
+                        size="small"
+                      >
                         <Trash2 size={18} />
                       </IconButton>
                     </Box>
@@ -233,8 +277,10 @@ const UserDash = () => {
 
       {/* Add Product Dialog */}
       <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Product</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+          Add New Product
+        </DialogTitle>
+        <DialogContent dividers>
           <Box
             component="form"
             sx={{
@@ -330,8 +376,10 @@ const UserDash = () => {
 
       {/* Edit Product Dialog */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Edit Product</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+          Edit Product
+        </DialogTitle>
+        <DialogContent dividers>
           {selectedProduct && (
             <Box
               component="form"

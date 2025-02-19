@@ -70,10 +70,10 @@ orderRouter.post(
         }
 
         try {
-            const { customerId, products, shippingAddress } = req.body;
+            const { customerId, products,totalAmount, shippingAddress } = req.body;
             
             // Calculate totalAmount dynamically
-            const totalAmount = products.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            // const totalAmount = products.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
             const order = new Order({
                 customerId,
@@ -148,4 +148,20 @@ orderRouter.delete("/:id", async (req, res) => {
     }
 });
 
+orderRouter.get("/user/:userId", async (req, res) => {
+    try {
+        const { status, customerId, page = 1, limit = 10 } = req.query;
+
+        const orders = await Order.find({ customerId: req.params.userId })
+           .populate("customerId")  // Populate user details
+            .populate("products.productId")  // Populate product details
+            .limit(parseInt(limit))
+            .skip((parseInt(page) - 1) * parseInt(limit))
+            .sort({ orderDate: -1 });
+
+        res.json({ success: true, orders });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 export default orderRouter;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState , useEffect} from 'react';
 import {
   Container,
   Grid,
@@ -66,6 +66,10 @@ const artisanData = {
 };
 
 const ArtisanProfile = () => {
+
+  useEffect(() => {
+    document.title = 'Artisan Profile - Rarely';
+  }, []);
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);

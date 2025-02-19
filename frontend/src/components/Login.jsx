@@ -55,14 +55,21 @@ export default function LoginForm() {
       console.table(response.data);
       console.log(response.data.user.role);
       if (response.data.user.role === "artisan"){
-        navigate('/dashboard');
+        navigate('/artisan-dashboard');
 
-      }else{
+      }
+      else if(response.data.user.role === "admin"){
+        navigate('/dashboard');
+      }
+      else{
         navigate('/');}
       login(response.data.user, response.data.token);
       // Optionally redirect to another page
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+
+      sessionStorage.setItem('token', response.data.token);
+      sessionStorage.setItem('user', JSON.stringify(response.data.user));
 
     } catch (error) {
       if (axios.isAxiosError(error)) {

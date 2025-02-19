@@ -114,6 +114,26 @@ cartRouter.put("/:id", async (req, res) => {
   }
 });
 
+cartRouter.patch("/:cartId/product/:productId" , async (req, res) => {
+    try { 
+        const { cartId, productId } = req.params;
+        const { quantity } = req.body;
+        const cart = await Cart.findById(cartId).populate('products.productId');
+        if (!cart) {
+            return res.status(404).json({ error: "Cart not found" });
+        }
+        const product = cart.products.find(p => p.productId._id.toString() === productId);
+        if (!product) {
+            return res.status(404).json({ error: "Product not found in cart" });
+        }
+        product.quantity = quantity;
+        cart.totalAmount = cart.products.reduce((total, p) => total + p.quantity * p.productId.price, 0);
+        const updatedCart = await cart.save();
+        res.json(updatedCart);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
 // DELETE a cart by id
 // DELETE a product from a cart by cartId and productId
 cartRouter.delete("/:cartId/product/:productId", async (req, res) => {
@@ -136,10 +156,10 @@ cartRouter.delete("/:cartId/product/:productId", async (req, res) => {
         return res.status(404).json({ error: "Product not found in cart" });
       }
       
-      // Optionally, recalculate the totalAmount if needed.
-      // For example, if you have access to product prices:
-      // cart.totalAmount = cart.products.reduce((acc, item) => acc + (item.quantity * item.productPrice), 0);
-      // For now, we'll leave totalAmount as is.
+      // update totalAmount
+      cart.totalAmount -= cart.products
+        .filter((p) => p.productId.toString() !== productId)
+        .reduce((total, p) => total + p.quantity * p.productId.price, 0);
       
       const updatedCart = await cart.save();
       res.json({ message: "Product removed successfully", cart: updatedCart });

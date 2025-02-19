@@ -15,6 +15,7 @@ import cartRouter from './routes/cart.js';
 import uploadRouter from './routes/uploadRoutes.js'; 
 import profileUploadRouter from './routes/profileUploadRouter.js';
 import favoriteRouter from './routes/favorite.js'; 
+import reviewRouter from './routes/review.js';
 
 // Load Environment Variables
 dotenv.config(); 
@@ -42,6 +43,8 @@ app.use('/api/cart', cartRouter);
 app.use('/api/upload', uploadRouter); 
 app.use('/api/profile/upload', profileUploadRouter);
 app.use('/api/favorites', favoriteRouter);
+app.use('/api/reviews', reviewRouter);
+
 
 
 // 🌍 Server Setup

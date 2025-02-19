@@ -5,8 +5,11 @@ import toast from 'react-hot-toast';
 import { useUserAuth } from '../../UserAuthContext';
 
 const Profile = () => {
-//   const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  useEffect(() => {
+    document.title = 'Profile - Rarely';
+  }, []);
+//   const user = JSON.parse(sessionStorage.getItem('user'));
+  const token = sessionStorage.getItem('token');
   const fileInputRef = useRef(null);
   const {user , updateProfilePicture} = useUserAuth();
 //   console.log("prof" ,user);
@@ -69,10 +72,10 @@ const Profile = () => {
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      localStorage.setItem('user', JSON.stringify(response.data));
+      sessionStorage.setItem('user', JSON.stringify(response.data));
       setMessage('Profile updated successfully!');
       toast.success('Profile updated successfully!');
-    //   localStorage.setItem('user', JSON.stringify(response.data));
+    //   sessionStorage.setItem('user', JSON.stringify(response.data));
     } catch (err) {
       console.error(err);
       setMessage('Error updating profile.');
@@ -135,7 +138,7 @@ const Profile = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      localStorage.setItem("user", JSON.stringify(updateResponse.data));
+      sessionStorage.setItem("user", JSON.stringify(updateResponse.data));
       setMessage("Profile picture updated successfully!");
     } catch (error) {
       console.error("Upload failed", error);

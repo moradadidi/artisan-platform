@@ -79,7 +79,10 @@ productRouter.put("/:id", verifyToken, upload.array("images", 5), async (req, re
         if (req.files.length > 0) {
             updatedData.images = req.files.map(file => file.path);
         }
-
+        if (req.body.tags) {
+            updatedData.tags = req.body.tags.split(",");
+        }
+        
         const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedData, {
             new: true,
             runValidators: true,

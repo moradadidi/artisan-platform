@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState ,useEffect} from 'react';
 import { 
   Container, 
   Grid, 
@@ -66,6 +66,9 @@ const artisans = [
 const specialties = ['All', 'Ceramics', 'Woodworking', 'Textile Art', 'Jewelry', 'Glass Art'];
 
 const Artisans = () => {
+  useEffect(() => {
+    document.title = 'Artisans - Rarely';
+  }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const navigate = useNavigate();

@@ -3,6 +3,7 @@ import {
   Container, 
   Grid, 
   Card, 
+  CardActionArea,
   CardMedia, 
   CardContent, 
   Typography, 
@@ -23,6 +24,8 @@ import {
   InputBase,
   Avatar,
   Tooltip,
+  CircularProgress,
+  Grow,
 } from '@mui/material';
 import { Heart, ShoppingCart, Filter, Search, Star, ArrowUpRight, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -41,17 +44,23 @@ const categories = [
 ];
 
 const Products = () => {
+  // Set the document title.
+  useEffect(() => {
+    document.title = 'Shop - Rarely';
+  }, []);
+
   const [products, setProducts] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 200]);
+  const [priceRange, setPriceRange] = useState([0, 2000]);
   const [selectedCategories, setSelectedCategories] = useState(['All Categories']);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true); // For showing a loading state
   const navigate = useNavigate();
   
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  const user = JSON.parse(sessionStorage.getItem('user'));
+  const token = sessionStorage.getItem('token');
 
-  // Toggle favorite for a product using the same approach as in your Favorites page.
+  // Toggle favorite for a product.
   const handleFavoriteToggle = async (productId) => {
     if (!user) {
       toast.error('You must be logged in to favorite products.');
@@ -60,7 +69,6 @@ const Products = () => {
     const product = products.find(p => p.id === productId);
     try {
       if (!product.isFavorite) {
-        // Add favorite: POST /api/favorites
         const response = await axios.post(
           'http://127.0.0.1:5000/api/favorites',
           { product: productId },
@@ -75,7 +83,6 @@ const Products = () => {
           )
         );
       } else {
-        // Remove favorite: DELETE /api/favorites/:id
         await axios.delete(
           `http://127.0.0.1:5000/api/favorites/${product.favoriteId}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -119,25 +126,31 @@ const Products = () => {
     }
   };
 
-  // Handle filtering UI state.
+  // Update price range.
   const handlePriceChange = (event, newValue) => setPriceRange(newValue);
+
+  // Update categories selection.
   const handleCategoryChange = (category) => {
     if (category === 'All Categories') {
       setSelectedCategories(['All Categories']);
     } else {
-      const newCategories = selectedCategories.filter(c => c !== 'All Categories');
+      let newCategories = selectedCategories.filter(c => c !== 'All Categories');
       if (newCategories.includes(category)) {
-        setSelectedCategories(newCategories.filter(c => c !== category));
+        newCategories = newCategories.filter(c => c !== category);
       } else {
-        setSelectedCategories([...newCategories, category]);
+        newCategories = [...newCategories, category];
       }
+      if (newCategories.length === 0) {
+        newCategories = ['All Categories'];
+      }
+      setSelectedCategories(newCategories);
     }
   };
 
   // Fetch products and merge with the user's favorites.
   const fetchProducts = async () => {
+    setLoading(true);
     try {
-      // Fetch all products.
       const response = await fetch('http://127.0.0.1:5000/api/products');
       const data = await response.json();
       const formattedProducts = data.map(product => ({
@@ -162,7 +175,6 @@ const Products = () => {
         favoriteId: null
       }));
       
-      // If user is logged in, fetch favorites and merge.
       if (user && token) {
         const favResponse = await axios.get(`http://127.0.0.1:5000/api/favorites/${user._id}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -170,7 +182,6 @@ const Products = () => {
         const favoritesData = favResponse.data;
         const favoritesMap = {};
         favoritesData.forEach(fav => {
-          // Map the favorite by its associated product ID.
           favoritesMap[fav.product._id] = fav._id;
         });
         formattedProducts.forEach(prod => {
@@ -184,6 +195,8 @@ const Products = () => {
       setProducts(formattedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,7 +204,7 @@ const Products = () => {
     fetchProducts();  
   }, []);
 
-  // Filter content for the Drawer / Sidebar.
+  // Filtering UI (Sidebar/Drawer)
   const FilterContent = () => (
     <Box sx={{ p: 3 }}>
       {/* Search */}
@@ -235,160 +248,200 @@ const Products = () => {
         onChange={handlePriceChange}
         valueLabelDisplay="auto"
         min={0}
-        max={200}
+        max={3000}
         sx={{ mt: 2 }}
       />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
         <Typography variant="body2">${priceRange[0]}</Typography>
         <Typography variant="body2">${priceRange[1]}</Typography>
       </Box>
-      <Button variant="contained" fullWidth sx={{ mt: 3 }}>
+      <Button 
+        variant="contained" 
+        fullWidth 
+        sx={{ mt: 3 }}
+        onClick={() => setDrawerOpen(false)} // Closes drawer on mobile
+      >
         Apply Filters
       </Button>
     </Box>
   );
 
-  // Single Product Card.
-  const ProductCard = ({ product }) => (
-    <Card sx={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'all 0.2s ease-in-out',
-      cursor: 'pointer',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-      }
-    }}>
-      <Box sx={{ position: 'relative' }}>
-        <CardMedia
-          component="img"
-          height="260"
-          image={product.image}
-          alt={product.name}
-          sx={{ 
-            objectFit: 'cover',
-            transition: 'transform 0.3s ease-in-out',
-            '&:hover': { transform: 'scale(1.05)' }
-          }}
-          onClick={() => navigate(`/products/${product.id}`)}
-        />
-        <Tooltip title={product.isFavorite ? "Remove from Favorites" : "Add to Favorites"}>
-          <IconButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleFavoriteToggle(product.id);
-            }}
-            sx={{
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              backgroundColor: 'white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              '&:hover': { backgroundColor: 'white', transform: 'scale(1.1)' }
-            }}
-          >
-            <Heart 
-              size={20} 
-              fill={product.isFavorite ? '#ff4081' : 'none'}
-              color={product.isFavorite ? '#ff4081' : '#666'}
+  // Product Card Component.
+  const ProductCard = ({ product, index }) => (
+    <Grow in timeout={300 + index * 50}> 
+      <Card
+        sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'all 0.2s ease-in-out',
+          height: '100%',
+          '&:hover': {
+            boxShadow: '0 8px 24px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        {/* Make the entire card clickable via CardActionArea */}
+        <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
+          <Box sx={{ position: 'relative' }}>
+            <CardMedia
+              component="img"
+              height="260"
+              image={product.image}
+              alt={product.name}
+              sx={{ 
+                objectFit: 'cover',
+                transition: 'transform 0.3s ease-in-out',
+                '&:hover': { transform: 'scale(1.03)' },
+                aspectRatio: '1/1'
+              }}
             />
-          </IconButton>
-        </Tooltip>
-        {!product.inStock && (
-          <Chip
-            label="Out of Stock"
-            color="error"
-            size="small"
-            sx={{ position: 'absolute', left: 8, top: 8 }}
-          />
-        )}
-      </Box>
-      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Artisan Info */}
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            mb: 2,
-            cursor: 'pointer',
-            '&:hover .artisan-name': { color: 'primary.main' }
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/artisans/${product.artisan.id}`);
-          }}
-        >
-          <Avatar
-            src={product.artisan.avatar}
-            alt={product.artisan.name}
-            sx={{ width: 40, height: 40, mr: 1 }}
-          />
-          <Box>
-            <Typography variant="subtitle2" className="artisan-name" sx={{ transition: 'color 0.2s ease-in-out' }}>
-              {product.artisan.name}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <MapPin size={14} color="#666" />
-              <Typography variant="caption" color="text.secondary">
-                {product.artisan.location}
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ ml: 'auto', textAlign: 'right' }}>
-            <Rating value={product.artisan.rating} size="small" readOnly />
-            <Typography variant="caption" color="text.secondary" display="block">
-              {product.artisan.reviews} reviews
-            </Typography>
-          </Box>
-        </Box>
-        <Typography 
-          variant="h6" 
-          gutterBottom
-          sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
-          onClick={() => navigate(`/products/${product.id}`)}
-        >
-          {product.name}
-        </Typography>
-        <Box sx={{ mb: 1 }}>
-          {product.tags.map((tag) => (
-            <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
-          ))}
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <Rating value={product.rating} precision={0.5} size="small" readOnly />
-          <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-            ({product.reviews})
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto', pt: 2 }}>
-          <Typography variant="h6" color="primary">
-            ${product.price}
-          </Typography>
-          <Tooltip title={product.inStock ? 'Add to Cart' : 'Out of Stock'}>
-            <span>
-              <IconButton 
-                color="primary"
-                disabled={!product.inStock}
+            <Tooltip title={product.isFavorite ? "Remove from Favorites" : "Add to Favorites"}>
+              <IconButton
                 onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddToCart(product.id);
+                  e.stopPropagation(); // Prevent CardActionArea click
+                  handleFavoriteToggle(product.id);
                 }}
                 sx={{
-                  backgroundColor: product.inStock ? 'primary.main' : 'grey.200',
-                  color: 'white',
-                  '&:hover': { backgroundColor: product.inStock ? 'primary.dark' : 'grey.200' }
+                  position: 'absolute',
+                  right: 8,
+                  top: 8,
+                  backgroundColor: 'white',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  '&:hover': { backgroundColor: 'white', transform: 'scale(1.1)' }
                 }}
               >
-                <ShoppingCart size={20} />
+                <Heart 
+                  size={20} 
+                  fill={product.isFavorite ? '#ff4081' : 'none'}
+                  color={product.isFavorite ? '#ff4081' : '#666'}
+                />
               </IconButton>
-            </span>
-          </Tooltip>
-        </Box>
-      </CardContent>
-    </Card>
+            </Tooltip>
+            {!product.inStock && (
+              <Chip
+                label="Out of Stock"
+                color="error"
+                size="small"
+                sx={{ position: 'absolute', left: 8, top: 8 }}
+              />
+            )}
+          </Box>
+          <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+            {/* Artisan Info */}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 2
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/artisans/${product.artisan.id}`);
+              }}
+            >
+              <Avatar
+                src={product.artisan.avatar}
+                alt={product.artisan.name}
+                sx={{ width: 40, height: 40, mr: 1, cursor: 'pointer' }}
+              />
+              <Box sx={{ cursor: 'pointer' }}>
+                <Typography 
+                  variant="subtitle2" 
+                  sx={{ 
+                    transition: 'color 0.2s ease-in-out',
+                    '&:hover': { color: 'primary.main' }
+                  }}
+                >
+                  {product.artisan.name}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <MapPin size={14} color="#666" />
+                  <Typography variant="caption" color="text.secondary">
+                    {product.artisan.location}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ ml: 'auto', textAlign: 'right' }}>
+                <Rating value={product.artisan.rating} size="small" readOnly />
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {product.artisan.reviews} reviews
+                </Typography>
+              </Box>
+            </Box>
+            <Typography 
+              variant="h6" 
+              gutterBottom
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                '&:hover': { color: 'primary.main' }
+              }}
+            >
+              {product.name}
+            </Typography>
+            <Box sx={{ mb: 1, display: 'flex', flexWrap: 'wrap' }}>
+              {product.tags.map((tag) => (
+                <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Rating value={product.rating} precision={0.5} size="small" readOnly />
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                ({product.reviews})
+              </Typography>
+            </Box>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mt: 'auto'
+              }}
+            >
+              <Typography variant="h6" color="primary">
+                ${product.price}
+              </Typography>
+              <Tooltip title={product.inStock ? 'Add to Cart' : 'Out of Stock'}>
+                <span>
+                  <IconButton 
+                    color="primary"
+                    disabled={!product.inStock}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product.id);
+                    }}
+                    sx={{
+                      backgroundColor: product.inStock ? 'primary.main' : 'grey.200',
+                      color: 'white',
+                      '&:hover': { 
+                        backgroundColor: product.inStock ? 'primary.dark' : 'grey.200'
+                      }
+                    }}
+                  >
+                    <ShoppingCart size={20} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+    </Grow>
   );
+
+  // Compute filtered products based on price, category, and search query.
+  const filteredProducts = products.filter(product => {
+    const withinPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+    const categoryMatch = 
+      selectedCategories.includes('All Categories') || 
+      selectedCategories.includes(product.category);
+    const searchMatch =
+      searchQuery.trim() === '' ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.tags.join(' ').toLowerCase().includes(searchQuery.toLowerCase());
+    return withinPrice && categoryMatch && searchMatch;
+  });
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -444,20 +497,50 @@ const Products = () => {
               </Box>
             </Box>
           </Box>
+
           {/* Mobile Filter Button */}
           <Box sx={{ display: { sm: 'none' }, mb: 2 }}>
-            <Button startIcon={<Filter />} variant="outlined" onClick={() => setDrawerOpen(true)} fullWidth>
+            <Button 
+              startIcon={<Filter />} 
+              variant="outlined" 
+              onClick={() => setDrawerOpen(true)} 
+              fullWidth
+            >
               Filters
             </Button>
           </Box>
+
+          {/* Loading State */}
+          {loading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
+              <CircularProgress />
+            </Box>
+          )}
+
           {/* Products Grid */}
-          <Grid container spacing={3}>
-            {products.map((product) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
-                <ProductCard product={product} />
-              </Grid>
-            ))}
-          </Grid>
+          {!loading && (
+            <>
+              {filteredProducts.length === 0 ? (
+                // No Products Found
+                <Box sx={{ textAlign: 'center', mt: 5 }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No products found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Try adjusting your filters or search to find what you’re looking for.
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {filteredProducts.map((product, index) => (
+                    <Grid item xs={12} sm={6} md={4} lg={3} key={product.id}>
+                      <ProductCard product={product} index={index} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
+          )}
         </Container>
       </Box>
     </Box>

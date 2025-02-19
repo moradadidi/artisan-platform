@@ -24,8 +24,8 @@ const ProductTable = () => {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user'));
+  const token = sessionStorage.getItem('token');
+  const user = JSON.parse(sessionStorage.getItem('user'));
 
   // For new product (excluding image field now)
   const [newProduct, setNewProduct] = useState({

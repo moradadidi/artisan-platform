@@ -1,7 +1,11 @@
 import { Container, Grid, Typography, Box, Button } from '@mui/material';
 import { ArrowRight } from 'lucide-react';
+import { useEffect } from 'react';
 
 const About = () => {
+  useEffect(() => {
+    document.title = 'About - Rarely';
+  }, []);
   return (
     <Container maxWidth="lg">
       <Grid container spacing={6} alignItems="center">

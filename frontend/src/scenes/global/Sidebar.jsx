@@ -155,6 +155,8 @@ function App() {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     navigate('/login');
     toast.success('Logout successful!');
   };

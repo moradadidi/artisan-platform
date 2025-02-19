@@ -1,5 +1,6 @@
 import { Container, Grid, Typography, Card, CardMedia, CardContent, Box, Button } from '@mui/material';
 import { ArrowRight } from 'lucide-react';
+import {useEffect} from 'react';
 
 const categories = [
   {
@@ -29,6 +30,9 @@ const categories = [
 ];
 
 const Discover = () => {
+  useEffect(() => {
+    document.title = 'Discover - Rarely';
+  }, []);
   return (
     <Container maxWidth="lg">
       <Box sx={{ mb: 6, textAlign: 'center' }}>

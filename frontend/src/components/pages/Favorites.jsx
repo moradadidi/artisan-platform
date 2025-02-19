@@ -22,13 +22,16 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 
 const Favorites = () => {
+  useEffect(() => {
+    document.title = 'Favorites - Rarely';
+  }, []);
   const [favoriteDocs, setFavoriteDocs] = useState([]); // an array of favorite documents
   const [activeTab, setActiveTab] = useState(0);
   const navigate = useNavigate();
 
-  // Get user & token from localStorage
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  // Get user & token from sessionStorage
+  const user = JSON.parse(sessionStorage.getItem('user'));
+  const token = sessionStorage.getItem('token');
 
   // Fetch user's favorites from the server
   const fetchFavorites = async () => {

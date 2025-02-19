@@ -58,7 +58,7 @@ const Navbar = () => {
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const userParsed = JSON.parse(localStorage.getItem('user'));
+  const userParsed = JSON.parse(sessionStorage.getItem('user'));
   const [countCart , setCountCart] = useState(0);
   const {user} = useUserAuth();
 
@@ -259,18 +259,8 @@ console.log("the user :" , user)
                     padding: { xs: '6px', sm: '8px' },
                   }}
                 >
-                  <Badge 
-                    badgeContent={countCart} 
-                    color="error"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        backgroundColor: '#FFD700',
-                        color: '#000'
-                      }
-                    }}
-                  >
+                  
                     <ShoppingCart size={20} />
-                  </Badge>
                 </IconButton>
 
                 {/* Notifications */}

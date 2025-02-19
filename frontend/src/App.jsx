@@ -28,6 +28,7 @@ import Reviews from "./components/artisanDash/Reviews";
 import Orders from "./components/artisanDash/Orders";
 import Profile from "./components/artisanDash/Profile";
 import "./App.css";
+import OrderConfirmation from "./components/pages/OrderConfirmation";
 
 /** Private Route Check */
 function PrivateRoute({ children }) {
@@ -39,7 +40,7 @@ function PrivateRoute({ children }) {
     console.error("Error parsing user from localStorage:", error);
   }
 
-  return user && user.role === "artisan" ? children : <Navigate to="/login" />;
+  return user && user.role === "admin" ? children : <Navigate to="/login" />;
 }
 
 /** Layout for Dashboard with Sidebar */
@@ -112,6 +113,7 @@ function AppContent() {
       <Route path="/discover" element={<NavbarLayout><Discover /></NavbarLayout>} />
       <Route path="/artisans" element={<NavbarLayout><Artisans /></NavbarLayout>} />
       <Route path="/cart" element={<NavbarLayout><Cart /></NavbarLayout>} />
+      <Route path="/order-confirmation" element={<NavbarLayout><OrderConfirmation /></NavbarLayout>} />
       <Route path="/favorites" element={<ArtisanDashboardLayout><Favorites /></ArtisanDashboardLayout>} />
       <Route path="/orders" element={<ArtisanDashboardLayout><Orders /></ArtisanDashboardLayout>} />
       <Route path="/reviews" element={<ArtisanDashboardLayout><Reviews /></ArtisanDashboardLayout>} />

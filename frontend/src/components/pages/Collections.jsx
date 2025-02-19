@@ -1,6 +1,6 @@
 import { Container, Grid, Typography, Card, CardMedia, CardContent, Box, Button } from '@mui/material';
 import { ArrowRight } from 'lucide-react';
-
+import {useEffect}    from 'react';
 const collections = [
   {
     id: 1,
@@ -33,6 +33,9 @@ const collections = [
 ];
 
 const Collections = () => {
+  useEffect(() => {
+    document.title = 'Collections - Rarely';
+  }, []);
   return (
     <Container maxWidth="lg">
       <Box sx={{ mb: 6, textAlign: 'center' }}>
