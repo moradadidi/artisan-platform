@@ -27,7 +27,7 @@ function ArtisanSidebar() {
     }
   }, [isMobile]);
 
-  const navItems = [
+  let  navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/artisan-dashboard" },
     { icon: Package, label: "Products", path: "/my-products" },
     { icon: User, label: "Profile", path: "/profile" },
@@ -35,9 +35,15 @@ function ArtisanSidebar() {
     { icon: Star, label: "Reviews", path: "/reviews" },
     { icon: ShoppingBag, label: "Orders", path: "/orders" },
   ];
+    const user = JSON.parse(sessionStorage.getItem("user"));
+
+  if (user.role === "user") {
+    navItems = navItems.filter(item => item.label !== "Products");
+  }
+
+ 
 
   // Get user info from localStorage
-  const user = JSON.parse(sessionStorage.getItem("user"));
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");

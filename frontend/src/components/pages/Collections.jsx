@@ -68,13 +68,13 @@ const Collections = () => {
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   {collection.description}
                 </Typography>
-                <Button
+                {/* <Button
                   variant="outlined"
                   color="primary"
                   endIcon={<ArrowRight size={20} />}
                 >
                   View Collection
-                </Button>
+                </Button> */}
               </CardContent>
             </Card>
           </Grid>

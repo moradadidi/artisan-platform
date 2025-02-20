@@ -1,4 +1,5 @@
-import { useState , useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Grid,
@@ -16,65 +17,30 @@ import {
   IconButton,
   Divider,
 } from '@mui/material';
-import { MapPin, Star, Heart, ShoppingCart, Instagram, Twitter, Globe } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
-
-const artisanData = {
-  id: 1,
-  name: "Sarah Miller",
-  avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150",
-  coverImage: "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=1200",
-  location: "Portland, OR",
-  specialty: "Ceramics",
-  rating: 4.8,
-  reviews: 156,
-  bio: "Specializing in minimalist ceramic designs with a focus on functionality and beauty. Each piece is handcrafted with care and attention to detail.",
-  experience: "15 years",
-  socialLinks: {
-    instagram: "https://instagram.com/sarahmiller",
-    twitter: "https://twitter.com/sarahmiller",
-    website: "https://sarahmiller.com"
-  },
-  products: [
-    {
-      id: 1,
-      name: "Handcrafted Vase",
-      price: 59.99,
-      rating: 4.5,
-      reviews: 12,
-      image: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&w=400",
-      tags: ["Handmade", "Ceramic", "Vase"],
-      isFavorite: false
-    },
-    {
-      id: 2,
-      name: "Ceramic Bowl Set",
-      price: 45.99,
-      rating: 4.8,
-      reviews: 28,
-      image: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=400",
-      tags: ["Handmade", "Ceramic", "Kitchen"],
-      isFavorite: true
-    }
-  ],
-  stats: {
-    totalSales: 1250,
-    completedOrders: 450,
-    averageRating: 4.8,
-    responseTime: "2 hours"
-  }
-};
+import {
+  MapPin,
+  Star,
+  Heart,
+  ShoppingCart,
+  Instagram,
+  Twitter,
+  Globe,
+} from 'lucide-react';
+import axios from 'axios';
 
 const ArtisanProfile = () => {
-
-  useEffect(() => {
-    document.title = 'Artisan Profile - Rarely';
-  }, []);
   const { id } = useParams();
   const navigate = useNavigate();
+  const [artisanData, setArtisanData] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const [following, setFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Fallback values if API does not provide certain fields.
+  const fallbackCoverImage = "https://via.placeholder.com/1200x400?text=Cover+Image";
+  const fallbackSpecialty = "Artisanal Crafts";
+
+  // Handler for tab change
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
@@ -83,6 +49,48 @@ const ArtisanProfile = () => {
     setFollowing(!following);
   };
 
+  // Fetch artisan data using Axios
+  useEffect(() => {
+    const fetchArtisanData = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:5000/api/users/${id}`);
+        setArtisanData(response.data);
+        console.log('Artisan data:', response.data);
+      } catch (error) {
+        console.error('Error fetching artisan data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArtisanData();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Container maxWidth="lg" className="mt-8">
+        <Typography variant="h5" align="center">
+          Loading artisan profile...
+        </Typography>
+      </Container>
+    );
+  }
+
+  if (!artisanData) {
+    return (
+      <Container maxWidth="lg" className="mt-8">
+        <Typography variant="h5" align="center">
+          Artisan not found.
+        </Typography>
+      </Container>
+    );
+  }
+
+  // Define fallback values for fields not provided by API
+  const coverImage = artisanData.coverImage || fallbackCoverImage;
+  const specialty = artisanData.specialty || fallbackSpecialty;
+  const products = artisanData.products || [];
+
+  // ProductCard component (used in Products tab)
   const ProductCard = ({ product }) => (
     <Card sx={{ height: '100%' }}>
       <CardMedia
@@ -97,13 +105,8 @@ const ArtisanProfile = () => {
           {product.name}
         </Typography>
         <Box sx={{ mb: 1 }}>
-          {product.tags.map((tag) => (
-            <Chip
-              key={tag}
-              label={tag}
-              size="small"
-              sx={{ mr: 0.5, mb: 0.5 }}
-            />
+          {product.tags && product.tags.map((tag) => (
+            <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
           ))}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -120,14 +123,14 @@ const ArtisanProfile = () => {
             <IconButton size="small" sx={{ mr: 1 }}>
               <Heart size={20} />
             </IconButton>
-            <IconButton 
+            <IconButton
               size="small"
               sx={{
                 backgroundColor: 'primary.main',
                 color: 'white',
                 '&:hover': {
                   backgroundColor: 'primary.dark',
-                }
+                },
               }}
             >
               <ShoppingCart size={20} />
@@ -145,7 +148,7 @@ const ArtisanProfile = () => {
         sx={{
           height: { xs: 200, md: 300 },
           position: 'relative',
-          backgroundImage: `url(${artisanData.coverImage})`,
+          backgroundImage: `url("https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?auto=format&fit=crop&w=1200")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           '&::before': {
@@ -166,7 +169,7 @@ const ArtisanProfile = () => {
             <Card sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { md: 'center' }, gap: 3 }}>
                 <Avatar
-                  src={artisanData.avatar}
+                  src={artisanData.profilePicture || 'https://via.placeholder.com/150'}
                   sx={{ 
                     width: { xs: 120, md: 160 }, 
                     height: { xs: 120, md: 160 },
@@ -180,7 +183,7 @@ const ArtisanProfile = () => {
                       {artisanData.name}
                     </Typography>
                     <Chip 
-                      label={artisanData.specialty}
+                      label={specialty}
                       color="primary"
                       sx={{ fontWeight: 500 }}
                     />
@@ -188,7 +191,7 @@ const ArtisanProfile = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 2 }}>
                     <MapPin size={18} />
                     <Typography variant="body1" sx={{ ml: 1 }}>
-                      {artisanData.location}
+                      {artisanData.address}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 3 }}>
                       <Star size={18} fill="#FFD700" stroke="#FFD700" />
@@ -200,33 +203,33 @@ const ArtisanProfile = () => {
                   <Typography variant="body1" color="text.secondary" paragraph>
                     {artisanData.bio}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 2 }}>
+                  {/* <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant={following ? "outlined" : "contained"}
                       onClick={handleFollowToggle}
                     >
                       {following ? 'Following' : 'Follow'}
                     </Button>
-                    <IconButton href={artisanData.socialLinks.instagram} target="_blank">
+                    <IconButton component="a" href={artisanData.socialLinks?.instagram} target="_blank">
                       <Instagram />
                     </IconButton>
-                    <IconButton href={artisanData.socialLinks.twitter} target="_blank">
+                    <IconButton component="a" href={artisanData.socialLinks?.twitter} target="_blank">
                       <Twitter />
                     </IconButton>
-                    <IconButton href={artisanData.socialLinks.website} target="_blank">
+                    <IconButton component="a" href={artisanData.socialLinks?.website} target="_blank">
                       <Globe />
                     </IconButton>
-                  </Box>
+                  </Box> */}
                 </Box>
               </Box>
 
               <Divider sx={{ my: 3 }} />
 
-              <Grid container spacing={3}>
+              {/* <Grid container spacing={3}>
                 <Grid item xs={6} sm={3}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {artisanData.stats.totalSales}
+                      {artisanData.stats?.totalSales || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Sales
@@ -236,7 +239,7 @@ const ArtisanProfile = () => {
                 <Grid item xs={6} sm={3}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {artisanData.stats.completedOrders}
+                      {artisanData.stats?.completedOrders || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Completed Orders
@@ -246,7 +249,7 @@ const ArtisanProfile = () => {
                 <Grid item xs={6} sm={3}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {artisanData.stats.averageRating}
+                      {artisanData.stats?.averageRating || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Average Rating
@@ -256,14 +259,14 @@ const ArtisanProfile = () => {
                 <Grid item xs={6} sm={3}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
-                      {artisanData.stats.responseTime}
+                      {artisanData.stats?.responseTime || 'N/A'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Response Time
                     </Typography>
                   </Box>
                 </Grid>
-              </Grid>
+              </Grid> */}
             </Card>
           </Grid>
 
@@ -278,11 +281,15 @@ const ArtisanProfile = () => {
 
             {activeTab === 0 && (
               <Grid container spacing={3}>
-                {artisanData.products.map((product) => (
-                  <Grid item xs={12} sm={6} md={4} key={product.id}>
-                    <ProductCard product={product} />
-                  </Grid>
-                ))}
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <Grid item xs={12} sm={6} md={4} key={product.id}>
+                      <ProductCard product={product} />
+                    </Grid>
+                  ))
+                ) : (
+                  <Typography>No products available.</Typography>
+                )}
               </Grid>
             )}
 

@@ -31,7 +31,8 @@ import {
   Settings,
   User,
   Package,
-  CreditCard,
+  LogIn,
+  UserPlus ,
   X,
   ChevronRight,
   Bell,
@@ -58,7 +59,7 @@ const Navbar = () => {
   const [notificationsMenu, setNotificationsMenu] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const userParsed = JSON.parse(sessionStorage.getItem('user'));
+  const userParsed = JSON.parse(sessionStorage.getItem('user') || '{}');
   const [countCart , setCountCart] = useState(0);
   const {user} = useUserAuth();
 
@@ -101,7 +102,7 @@ console.log("the user :" , user)
   const navItems = [
     { path: '/discover', label: 'Discover' },
     { path: '/shop', label: 'Shop' },
-    { path: '/artisans', label: 'Artisans' },
+    // { path: '/artisans', label: 'Artisans' },
     { path: '/collections', label: 'Collections' },
     { path: '/about', label: 'About' },
   ];
@@ -271,18 +272,8 @@ console.log("the user :" , user)
                     display: { xs: 'none', sm: 'flex' }
                   }}
                 >
-                  <Badge 
-                    badgeContent={3} 
-                    color="error"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        backgroundColor: '#FFD700',
-                        color: '#000'
-                      }
-                    }}
-                  >
+                  
                     <Bell size={20} />
-                  </Badge>
                 </IconButton>
                 
                 {/* Profile Menu */}
@@ -306,14 +297,19 @@ console.log("the user :" , user)
                             cursor: 'pointer',
                           }}
                           onClick={() => {
-                            window.location.href = "/artisan-dashboard"; 
+                            if (["artisan", "admin", "user"].includes(userParsed.role)) {
+                              window.location.href = "/artisan-dashboard";
+                            } else {
+                              setProfileMenu(event.currentTarget);
+                            }
+                            
                           }
                         }
                         />
                 </IconButton>
 
                 {/* Profile Dropdown Menu */}
-                {/* <Menu
+                <Menu
                   anchorEl={profileMenu}
                   open={Boolean(profileMenu)}
                   onClose={handleProfileClose}
@@ -336,45 +332,25 @@ console.log("the user :" , user)
                 >
                   <Box sx={{ px: 2, py: 1.5 }}>
                     <Typography variant="subtitle1" noWrap>
-                    {userParsed?.name}
+                      Create or access your account
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                    {userParsed?.email}
-                    </Typography>
+                   
                   </Box>
                   <Divider />
-                  <MenuItem onClick={() => navigate('/profile')}>
+                  <MenuItem onClick={() => navigate('/login')}>
                     <ListItemIcon>
-                      <User size={20} />
+                      <LogIn size={20} />
                     </ListItemIcon>
-                    Profile
+                    Login
                   </MenuItem>
-                  <MenuItem onClick={() => navigate('/orders')}>
+                  <MenuItem onClick={() => navigate('/register')}>
                     <ListItemIcon>
-                      <Package size={20} />
+                      <UserPlus size={20} />
                     </ListItemIcon>
-                    My Orders
+                    Register
                   </MenuItem>
-                  <MenuItem onClick={() => navigate('/userdash')}>
-                    <ListItemIcon>
-                      <CreditCard size={20} />
-                    </ListItemIcon>
-                    Dashboard
-                  </MenuItem>
-                  <MenuItem onClick={() => navigate('/settings')}>
-                    <ListItemIcon>
-                      <Settings size={20} />
-                    </ListItemIcon>
-                    Settings
-                  </MenuItem>
-                  <Divider />
-                  <MenuItem onClick={handleLogout}>
-                    <ListItemIcon>
-                      <LogOut size={20} />
-                    </ListItemIcon>
-                    Logout
-                  </MenuItem>
-                </Menu> */}
+                  
+                </Menu>
               </Box>
             </Toolbar>
           </Container>

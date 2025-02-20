@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -16,7 +16,6 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-// import { profile } from 'console';
 
 // --- Logo Component ---
 const Logo = () => (
@@ -43,7 +42,7 @@ export default function RegisterForm() {
 
   // Adjusted container and paper styles to reduce overall height
   const containerStyles = {
-    minHeight: '80vh', // Decreased from 100vh to 80vh
+    minHeight: '80vh',
     backgroundColor: '#f5f5f5',
     display: 'flex',
     alignItems: 'center',
@@ -55,7 +54,7 @@ export default function RegisterForm() {
   const paperStyles = { px: 3, py: 1, maxWidth: 400, width: '100%' };
 
   const buttonStyles = {
-    mt: 2, // Slightly reduced top margin
+    mt: 2,
     mb: 2,
     backgroundColor: '#fbc02d',
     '&:hover': { backgroundColor: '#f9a825' },
@@ -73,7 +72,7 @@ export default function RegisterForm() {
     setFormData((prev) => ({ ...prev, role: selectedRole }));
   };
 
-  // Handle form submission
+  // Handle form submission with email verification instruction
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -82,12 +81,10 @@ export default function RegisterForm() {
       toast.error('Please fill in all fields');
       return;
     }
-
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -95,26 +92,30 @@ export default function RegisterForm() {
 
     try {
       setLoading(true);
-      // Submit registration data
       const response = await axios.post('http://127.0.0.1:5000/api/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         role: formData.role,
       });
-      toast.success('Registration successful!');
-      console.table(response.data);
-      console.log('User created');
-      // Optionally, redirect to login page here
+      toast.success('Registration successful! Please check your email to verify your account.');
+      // Optionally redirect to login page
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Registration failed');
+        if (error.response?.status === 409) {
+          toast.error("A user with that email already exists.");
+        } else if (error.response?.status === 500) {
+          toast.error("Server error occurred during registration. Please try again later.");
+        } else {
+          toast.error(error.response?.data?.message || 'Registration failed');
+        }
       } else {
         toast.error('An unexpected error occurred');
       }
     } finally {
       setLoading(false);
     }
+    
   };
 
   return (

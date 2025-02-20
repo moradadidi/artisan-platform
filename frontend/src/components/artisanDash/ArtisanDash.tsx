@@ -1,20 +1,89 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Star, Package, DollarSign, Bell, Search, Plus, Filter, ChevronDown } from 'lucide-react';
-import { text } from 'stream/consumers';
+import {
+  ShoppingBag,
+  Star,
+  Package,
+  DollarSign,
+  Search,
+  Plus,
+  Filter,
+  ChevronDown,
+  Heart,
+} from 'lucide-react';
 
 const Dashboard = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const user = JSON.parse(sessionStorage.getItem('user'));
 
   useEffect(() => {
     document.title = 'Dashboard - Rarely';
   }, []);
 
+  // If the user is a regular user, show a custom dashboard
+  if (user && user.role === "user") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-center space-x-4">
+            <img
+              src={user.profilePicture || '/default-avatar.png'}
+              alt={user.name}
+              className="w-16 h-16 rounded-full border-2 border-indigo-500"
+            />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Welcome Back, {user.name}!
+              </h1>
+              <p className="text-gray-700">
+                This is your personal dashboard.
+              </p>
+            </div>
+          </div>
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white shadow rounded-xl p-6 hover:shadow-xl transition">
+              <div className="flex items-center space-x-3">
+                <ShoppingBag className="h-8 w-8 text-indigo-600" />
+                <h2 className="text-xl font-semibold text-gray-800">My Orders</h2>
+              </div>
+              <p className="mt-3 text-gray-600">
+                View your order history and track shipments.
+              </p>
+              <Link
+                to="/orders"
+                className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition"
+              >
+                View Orders &rarr;
+              </Link>
+            </div>
+            <div className="bg-white shadow rounded-xl p-6 hover:shadow-xl transition">
+              <div className="flex items-center space-x-3">
+                <Heart className="h-8 w-8 text-pink-500" />
+                <h2 className="text-xl font-semibold text-gray-800">Favorites</h2>
+              </div>
+              <p className="mt-3 text-gray-600">
+                Check out the products you’ve marked as favorites.
+              </p>
+              <Link
+                to="/favorites"
+                className="mt-4 inline-block bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 transition"
+              >
+                View Favorites &rarr;
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise (artisan/admin): show the original dashboard layout
+
   const stats = [
-    { label: 'Total Sales', value: '$2,345', icon: DollarSign, color: 'bg-amber-500', trend: '+12.5%' , textColor: 'text-amber-500' },
+    { label: 'Total Sales', value: '$2,345', icon: DollarSign, color: 'bg-amber-500', trend: '+12.5%', textColor: 'text-amber-500' },
     { label: 'Active Orders', value: '12', icon: Package, color: 'bg-emerald-500', trend: '+3', textColor: 'text-emerald-500' },
     { label: 'Reviews', value: '4.8 ★', icon: Star, color: 'bg-blue-500', trend: '+0.2', textColor: 'text-blue-500' },
-    { label: 'Products', value: '56', icon: ShoppingBag, color: 'bg-purple-500', trend: '+5' ,  textColor: 'text-purple-500'},
+    { label: 'Products', value: '56', icon: ShoppingBag, color: 'bg-purple-500', trend: '+5', textColor: 'text-purple-500' },
   ];
 
   const activities = [
@@ -64,13 +133,6 @@ const Dashboard = () => {
                 />
                 <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              {/* Notification Bell */}
-              {/* <div className="relative">
-                <button className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-full">
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full"></span>
-                  <Bell className="h-6 w-6" />
-                </button>
-              </div> */}
               {/* Filter Dropdown */}
               <div className="relative">
                 <button
@@ -96,7 +158,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {quickActions.map((action) => (
               <Link
                 key={action.label}

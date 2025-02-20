@@ -19,10 +19,19 @@ const Reviews = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:5000/api/reviews/artisan/${user._id}/products`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        let res;
+        if(user.role === 'artisan') {
+          res = await axios.get(
+            `http://127.0.0.1:5000/api/reviews/artisan/${user._id}/products`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }else {
+          res = await axios.get(
+            `http://127.0.0.1:5000/api/reviews/artisan/${user._id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+        
         setReviews(res.data);
       } catch (error) {
         console.error('Error fetching reviews:', error);

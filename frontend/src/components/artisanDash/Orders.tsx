@@ -217,6 +217,11 @@ const Orders = () => {
             </div>
           ))}
         </div>
+        {filteredOrders.length === 0 && (
+          <div className="text-center mt-8">
+            <p className="text-gray-600">No orders found.</p>
+          </div>
+        )}
       </div>
     </div>
   );

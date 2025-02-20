@@ -29,6 +29,8 @@ import Orders from "./components/artisanDash/Orders";
 import Profile from "./components/artisanDash/Profile";
 import "./App.css";
 import OrderConfirmation from "./components/pages/OrderConfirmation";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 
 /** Private Route Check */
 function PrivateRoute({ children }) {
@@ -58,7 +60,12 @@ function DashboardLayout({ children }) {
 
 function ArtisanDashboardLayout({ children }) {
   const location = useLocation();
+  const user = JSON.parse(sessionStorage.getItem('user'));
 
+  // If there's no logged in user, redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
   const getPageTitle = (pathname) => {
     return pathname.substring(1).charAt(0).toUpperCase() + pathname.slice(2) || 'Dashboard';
   };
@@ -105,6 +112,10 @@ function AppContent() {
       {/* Public Routes */}
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<SignUp />} />
+      <Route path="/forgot-password" element={< ForgotPassword/>} />
+      <Route path="/reset-password" element={< ResetPassword/>} />
+
+      
       <Route path="/" element={<NavbarLayout><Home /></NavbarLayout>} />
       <Route path="/home" element={<NavbarLayout><Home /></NavbarLayout>} />
       <Route path="/about" element={<NavbarLayout><About /></NavbarLayout>} />

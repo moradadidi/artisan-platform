@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -15,18 +15,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '../UserAuthContext';
 
-
-
 export default function LoginForm() {
-
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
   const { login } = useUserAuth();
-
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +37,6 @@ export default function LoginForm() {
       toast.error('Please fill in all fields');
       return;
     }
-
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -50,27 +45,30 @@ export default function LoginForm() {
     try {
       setLoading(true);
       const response = await axios.post('http://127.0.0.1:5000/api/login', formData);
+      
+      // Check if the user's email is verified
+      if (!response.data.user.isVerified) {
+        toast.error('Please verify your email before logging in.');
+        return;
+      }
+
       toast.success('Login successful!');
-      // Handle successful login (e.g., store token, redirect)
       console.table(response.data);
       console.log(response.data.user.role);
-      if (response.data.user.role === "artisan"){
+      // Redirect based on user role
+      if (response.data.user.role === "artisan") {
         navigate('/artisan-dashboard');
-
-      }
-      else if(response.data.user.role === "admin"){
+      } else if (response.data.user.role === "admin") {
         navigate('/dashboard');
+      } else {
+        navigate('/');
       }
-      else{
-        navigate('/');}
       login(response.data.user, response.data.token);
-      // Optionally redirect to another page
+      // Store token and user data
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-
       sessionStorage.setItem('token', response.data.token);
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
-
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Login failed');
@@ -99,7 +97,7 @@ export default function LoginForm() {
           <img 
             src="../../public/logo.png" 
             alt="Logo" 
-            style={{ maxWidth: '150px', marginBottom: '10px' , textAlign: 'center' , marginLeft: 'auto', marginRight: 'auto'}} 
+            style={{ maxWidth: '150px', marginBottom: '10px', marginLeft: 'auto', marginRight: 'auto' }} 
           />
         </Box>
         <Typography variant="h4" align="center" gutterBottom>
@@ -169,8 +167,8 @@ export default function LoginForm() {
           <Typography variant="body2" style={{ color: '#757575' }}>
             Don&apos;t have an account?
           </Typography>
-          <Link to="/register" style={{ textDecoration: 'none', color: '#f9a825'  }}>
-              Create new account
+          <Link to="/register" style={{ textDecoration: 'none', color: '#f9a825' }}>
+            Create new account
           </Link>
         </Box>
       </Paper>

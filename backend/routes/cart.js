@@ -181,4 +181,17 @@ cartRouter.delete("/:cartId/product/:productId", async (req, res) => {
     }
     });
 
+    cartRouter.delete("/:cartId", async (req, res) => {
+        try {
+          const cart = await Cart.findByIdAndDelete(req.params.cartId);
+          if (!cart) {
+            return res.status(404).json({ error: "Cart not found" });
+          }
+          res.json({ message: "Cart deleted successfully" });
+        } catch (error) { 
+          res.status(500).json({ error: error.message });
+        }
+      });
+          
+
 export default cartRouter;

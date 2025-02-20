@@ -213,7 +213,7 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
             '&:hover .artisan-name': { color: 'primary.main' },
           }}
           onClick={() => {
-            if (userData._id) navigate(`/artisans/${userData._id}`);
+            // if (userData._id) navigate(`/artisans/${userData._id}`);
           }}
         >
           <Avatar

@@ -127,9 +127,12 @@ const Profile = () => {
   
       const imageUrl = response.data.imageUrl;
       setProfilePicture(imageUrl);
-        updateProfilePicture(imageUrl);
-        // console.log("image" ,imageUrl);
+      updateProfilePicture(imageUrl);
+      if (imageUrl) {
         toast.success('Profile picture updated successfully!');
+      }else{
+        toast.error('Try diferent image !!!.');
+      }
       
       // Update user profile with new profile picture
       const updateResponse = await axios.put(
@@ -142,6 +145,7 @@ const Profile = () => {
       setMessage("Profile picture updated successfully!");
     } catch (error) {
       console.error("Upload failed", error);
+      toast.error('Try diferent image !!!.');
       setMessage("Error uploading profile picture.");
     }
   };
@@ -177,10 +181,10 @@ const Profile = () => {
           </div>
           <div>
             <h3 className="text-2xl font-semibold">{formData.name || 'Artisan Name'}</h3>
-            <p className="text-gray-600">Artisan since 2022</p>
+            <p className="text-gray-600">Artisan since {user.createdAt.slice(0, 4)}</p>
             <div className="mt-2 flex items-center space-x-2">
               <span className="px-3 py-1 bg-[#FFF8E7] text-[#FFB636] rounded-full text-sm font-medium">
-                Verified Artisan
+                {user.role === 'artisan' ? 'Verified Artisan' : 'Verified Customer'}
               </span>
             </div>
           </div>

@@ -232,6 +232,10 @@ const Cart = () => {
         toast.success('Order placed successfully!');
         // Optionally clear the cart here or navigate to a confirmation page
         navigate('/order-confirmation');
+
+        // Clear the cart
+        await axios.delete(`http://127.0.0.1:5000/api/cart/${cartId}`);
+        setItems([]);
       } else {
         toast.error('Failed to place order. Please try again.');
       }
