@@ -203,7 +203,7 @@ const ArtisanProfile = () => {
                   <Typography variant="body1" color="text.secondary" paragraph>
                     {artisanData.bio}
                   </Typography>
-                  {/* <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant={following ? "outlined" : "contained"}
                       onClick={handleFollowToggle}
@@ -219,13 +219,13 @@ const ArtisanProfile = () => {
                     <IconButton component="a" href={artisanData.socialLinks?.website} target="_blank">
                       <Globe />
                     </IconButton>
-                  </Box> */}
+                  </Box>
                 </Box>
               </Box>
 
               <Divider sx={{ my: 3 }} />
 
-              {/* <Grid container spacing={3}>
+              <Grid container spacing={3}>
                 <Grid item xs={6} sm={3}>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" color="primary">
@@ -266,7 +266,7 @@ const ArtisanProfile = () => {
                     </Typography>
                   </Box>
                 </Grid>
-              </Grid> */}
+              </Grid>
             </Card>
           </Grid>
 
