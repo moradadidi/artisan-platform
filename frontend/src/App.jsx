@@ -7,7 +7,7 @@ import Sidebar from "./scenes/global/Sidebar";
 import Dashboard from "./scenes/dashboard";
 import LoginForm from "./components/Login";
 import SignUp from "./components/signup";
-import ProductTable from "./components/pages/products";
+import ProductTable from "./components/pages/Products";
 import Navbar from "./components/navbar";
 import NotFoundPage from "./components/NotFoundPage";
 import About from "./components/pages/About";
