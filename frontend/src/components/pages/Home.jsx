@@ -176,7 +176,8 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
           sx={{
             objectFit: 'cover',
             transition: 'transform 0.3s ease-in-out',
-            '&:hover': { transform: 'scale(1.05)' },
+            '&:hover': { transform: 'scale(1.05)' } ,
+            aspectRatio: '1/1',
           }}
           onClick={() => navigate(`/products/${product._id}`)}
         />

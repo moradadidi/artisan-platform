@@ -31,6 +31,7 @@ import "./App.css";
 import OrderConfirmation from "./components/pages/OrderConfirmation";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import { Chatbot } from "./components/Chatbot";
 
 /** Private Route Check */
 function PrivateRoute({ children }) {
@@ -139,6 +140,7 @@ function AppContent() {
 
       {/* Not Found */}
       <Route path="*" element={<NotFoundPage />} />
+      
     </Routes>
   );
 }
@@ -155,6 +157,7 @@ function App() {
         <Router>
           <AppContent />
           <Toaster />
+          <Chatbot />
         </Router>
       </ThemeProvider>
     </ColorModeContext.Provider>
