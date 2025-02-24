@@ -353,7 +353,7 @@ const Home = () => {
     const fetchFavorites = async () => {
       if (!user) return;
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/favorites/${user._id}`, {
+        const response = await axios.get(`https://rarely.onrender.com/api/favorites/${user._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const favoritesMap = {};
@@ -382,7 +382,7 @@ const Home = () => {
     if (isCurrentlyFav) {
       try {
         const favoriteId = favorites[productId].favoriteId;
-        await axios.delete(`http://127.0.0.1:5000/api/favorites/${favoriteId}`, {
+        await axios.delete(`https://rarely.onrender.com/api/favorites/${favoriteId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success('Removed from favorites');
@@ -398,7 +398,7 @@ const Home = () => {
     } else {
       try {
         const response = await axios.post(
-          `http://127.0.0.1:5000/api/favorites`,
+          `https://rarely.onrender.com/api/favorites`,
           { product: productId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -418,7 +418,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/products');
+        const response = await axios.get('https://rarely.onrender.com/api/products');
         setLatestProducts(response.data);
         setPopularProducts(response.data);
       } catch (error) {
@@ -448,7 +448,7 @@ const Home = () => {
     };
 
     try {
-      await axios.post('http://127.0.0.1:5000/api/cart', payload, {
+      await axios.post('https://rarely.onrender.com/api/cart', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Added to cart successfully!');

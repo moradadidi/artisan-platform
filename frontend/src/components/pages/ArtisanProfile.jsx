@@ -53,7 +53,7 @@ const ArtisanProfile = () => {
   useEffect(() => {
     const fetchArtisanData = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/users/${id}`);
+        const response = await axios.get(`https://rarely.onrender.com/api/users/${id}`);
         setArtisanData(response.data);
         console.log('Artisan data:', response.data);
       } catch (error) {

@@ -78,7 +78,7 @@ const Cart = () => {
         if (!user) return;
 
         const response = await axios.get(
-          `http://127.0.0.1:5000/api/cart/user/${user._id}`
+          `https://rarely.onrender.com/api/cart/user/${user._id}`
         );
         const cartData = response.data; // array of carts
 
@@ -118,7 +118,7 @@ const Cart = () => {
     try {
       // 3) Update quantity in the backend
       await axios.patch(
-        `http://127.0.0.1:5000/api/cart/${cartId}/product/${productId}`,
+        `https://rarely.onrender.com/api/cart/${cartId}/product/${productId}`,
         { quantity: newQuantity }
       );
     } catch (error) {
@@ -144,7 +144,7 @@ const Cart = () => {
       );
       // Remove from backend
       await axios.delete(
-        `http://127.0.0.1:5000/api/cart/${cartId}/product/${productId}`
+        `https://rarely.onrender.com/api/cart/${cartId}/product/${productId}`
       );
       toast.success('Item removed from cart successfully!');
     } catch (error) {
@@ -223,7 +223,7 @@ const Cart = () => {
   
       // Send a POST request to create the order
       const response = await axios.post(
-        'http://127.0.0.1:5000/api/orders',
+        'https://rarely.onrender.com/api/orders',
         payload,
         { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } }
       );
@@ -234,7 +234,7 @@ const Cart = () => {
         navigate('/order-confirmation');
 
         // Clear the cart
-        await axios.delete(`http://127.0.0.1:5000/api/cart/${cartId}`);
+        await axios.delete(`https://rarely.onrender.com/api/cart/${cartId}`);
         setItems([]);
       } else {
         toast.error('Failed to place order. Please try again.');

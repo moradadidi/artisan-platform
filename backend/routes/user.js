@@ -97,7 +97,7 @@ userRouter.post("/", async (req, res) => {
     const token = jwt.sign({ userId: savedUser._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     const encodedToken = encodeURIComponent(token);
     // Construct verification link
-    const verificationUrl = `http://127.0.0.1:5000/api/register/verify-email/${encodedToken}`;
+    const verificationUrl = `https://rarely.onrender.com/api/register/verify-email/${encodedToken}`;
 
     // Send verification email
     const mailOptions = {
@@ -188,7 +188,7 @@ userRouter.post("/forgot-password", async (req, res) => {
     const resetToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
     const encodedResetToken = encodeURIComponent(resetToken);
     // This link is for GET route (see below) which redirects to your front-end form
-    const resetUrl = `http://127.0.0.1:5000/api/register/reset-password?token=${encodedResetToken}`;
+    const resetUrl = `https://rarely.onrender.com/api/register/reset-password?token=${encodedResetToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,

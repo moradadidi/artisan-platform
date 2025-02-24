@@ -166,7 +166,7 @@ const UserDash = () => {
   const fetchProducts = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/api/products/user/${user._id}`,
+        `https://rarely.onrender.com/api/products/user/${user._id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -209,7 +209,7 @@ const UserDash = () => {
 
       newProductImages.forEach((file) => formData.append('images', file));
 
-      await axios.post('http://127.0.0.1:5000/api/products', formData, {
+      await axios.post('https://rarely.onrender.com/api/products', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -252,7 +252,7 @@ const UserDash = () => {
       }
 
       await axios.put(
-        `http://127.0.0.1:5000/api/products/${selectedProduct._id}`,
+        `https://rarely.onrender.com/api/products/${selectedProduct._id}`,
         formData,
         {
           headers: {
@@ -277,7 +277,7 @@ const UserDash = () => {
   // ---------------------------
   const handleDelete = async (productId) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/products/${productId}`, {
+      await axios.delete(`https://rarely.onrender.com/api/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchProducts();

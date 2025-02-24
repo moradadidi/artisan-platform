@@ -23,7 +23,7 @@ const Orders = () => {
     const fetchOrders = async () => {
       try {
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
-        let url = 'http://127.0.0.1:5000/api/orders/user';
+        let url = 'https://rarely.onrender.com/api/orders/user';
         if (user && user._id) {
           url += `/${user._id}`;
         }

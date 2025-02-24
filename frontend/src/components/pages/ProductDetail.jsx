@@ -72,7 +72,7 @@ const ProductDetail = () => {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://127.0.0.1:5000/api/products/${id}`);
+      const response = await fetch(`https://rarely.onrender.com/api/products/${id}`);
       if (!response.ok) {
         throw new Error('Failed to fetch product.');
       }
@@ -82,7 +82,7 @@ const ProductDetail = () => {
       // Check if product is in user's favorites
       if (user && token) {
         const favResponse = await axios.get(
-          `http://127.0.0.1:5000/api/favorites/${user._id}`,
+          `https://rarely.onrender.com/api/favorites/${user._id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const favoritesData = favResponse.data;
@@ -104,7 +104,7 @@ const ProductDetail = () => {
   const fetchReviews = async () => {
     try {
       const res = await axios.get(
-        `http://127.0.0.1:5000/api/reviews/product/${id}`
+        `https://rarely.onrender.com/api/reviews/product/${id}`
       );
       setReviews(res.data);
     } catch (err) {
@@ -123,7 +123,7 @@ const ProductDetail = () => {
     try {
       if (!isFavorite) {
         const response = await axios.post(
-          'http://127.0.0.1:5000/api/favorites',
+          'https://rarely.onrender.com/api/favorites',
           { product: product._id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -132,7 +132,7 @@ const ProductDetail = () => {
         setFavoriteId(response.data._id);
       } else {
         await axios.delete(
-          `http://127.0.0.1:5000/api/favorites/${favoriteId}`,
+          `https://rarely.onrender.com/api/favorites/${favoriteId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success('Removed from favorites');
@@ -159,7 +159,7 @@ const ProductDetail = () => {
         products: [{ productId: product._id, quantity }],
         totalAmount: product.price * quantity,
       };
-      await axios.post('http://127.0.0.1:5000/api/cart', payload, {
+      await axios.post('https://rarely.onrender.com/api/cart', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Added to cart successfully!');
@@ -201,7 +201,7 @@ const ProductDetail = () => {
     }
     try {
       await axios.post(
-        'http://127.0.0.1:5000/api/reviews',
+        'https://rarely.onrender.com/api/reviews',
         {
           productId: id,
           customerId: user._id,

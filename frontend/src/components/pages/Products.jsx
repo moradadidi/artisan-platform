@@ -47,7 +47,7 @@ const ProductTable = () => {
   // GET all products
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:5000/api/products`, {
+      const response = await axios.get(`https://rarely.onrender.com/api/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProducts(Array.isArray(response.data) ? response.data : [response.data]);
@@ -59,7 +59,7 @@ const ProductTable = () => {
   // DELETE a product
   const handleDelete = async (productId) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/products/${productId}`, {
+      await axios.delete(`https://rarely.onrender.com/api/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchProducts();
@@ -123,7 +123,7 @@ const ProductTable = () => {
         formData.append('images', file);
       });
 
-      await axios.post('http://127.0.0.1:5000/api/products', formData, {
+      await axios.post('https://rarely.onrender.com/api/products', formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -154,7 +154,7 @@ const ProductTable = () => {
         editProductImages.forEach((file) => {
           formData.append('images', file);
         });
-        await axios.put(`http://127.0.0.1:5000/api/products/${currentProduct._id}`, formData, {
+        await axios.put(`https://rarely.onrender.com/api/products/${currentProduct._id}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data',
@@ -163,7 +163,7 @@ const ProductTable = () => {
         console.log(currentProduct._id)
       } else {
         // No new images selected; update with JSON
-        await axios.put(`http://127.0.0.1:5000/api/products/${currentProduct._id}`, currentProduct, {
+        await axios.put(`https://rarely.onrender.com/api/products/${currentProduct._id}`, currentProduct, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }

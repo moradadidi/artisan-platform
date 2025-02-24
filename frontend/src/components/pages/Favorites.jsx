@@ -37,7 +37,7 @@ const Favorites = () => {
   const fetchFavorites = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/api/favorites/${user._id}`,
+        `https://rarely.onrender.com/api/favorites/${user._id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -65,7 +65,7 @@ const Favorites = () => {
   const removeFromFavorites = async (favoriteId) => {
     try {
       // Call the DELETE endpoint with the favorite's _id.
-      const response = await axios.delete(`http://127.0.0.1:5000/api/favorites/${favoriteId}`, {
+      const response = await axios.delete(`https://rarely.onrender.com/api/favorites/${favoriteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       

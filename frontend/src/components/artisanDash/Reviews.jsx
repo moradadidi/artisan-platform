@@ -22,12 +22,12 @@ const Reviews = () => {
         let res;
         if(user.role === 'artisan') {
           res = await axios.get(
-            `http://127.0.0.1:5000/api/reviews/artisan/${user._id}/products`,
+            `https://rarely.onrender.com/api/reviews/artisan/${user._id}/products`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }else {
           res = await axios.get(
-            `http://127.0.0.1:5000/api/reviews/artisan/${user._id}`,
+            `https://rarely.onrender.com/api/reviews/artisan/${user._id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
         }

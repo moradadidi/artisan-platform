@@ -25,7 +25,7 @@ const ResetPassword = () => {
     try {
       setLoading(true);
       // Send POST request to your backend reset-password route with the token as a query parameter
-      const response = await axios.post(`http://127.0.0.1:5000/api/register/reset-password?token=${encodeURIComponent(token)}`, { newPassword });
+      const response = await axios.post(`https://rarely.onrender.com/api/register/reset-password?token=${encodeURIComponent(token)}`, { newPassword });
       toast.success(response.data.message || "Password reset successfully");
       navigate("/login");
       // Optionally redirect to login page

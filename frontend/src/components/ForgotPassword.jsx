@@ -28,7 +28,7 @@ export default function ForgotPassword() {
     try {
       setLoading(true);
       // Send a POST request to your forgot-password endpoint
-      const response = await axios.post('http://127.0.0.1:5000/api/register/forgot-password', { email });
+      const response = await axios.post('https://rarely.onrender.com/api/register/forgot-password', { email });
       toast.success(response.data.message || "If that email exists, a reset link has been sent.");
       // Optionally navigate back to login after a few seconds
       setTimeout(() => {

@@ -44,7 +44,7 @@ export default function LoginForm() {
 
     try {
       setLoading(true);
-      const response = await axios.post('http://127.0.0.1:5000/api/login', formData);
+      const response = await axios.post('https://rarely.onrender.com/api/login', formData);
       
       // Check if the user's email is verified
       if (!response.data.user.isVerified) {

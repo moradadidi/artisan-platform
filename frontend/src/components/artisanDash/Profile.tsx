@@ -68,7 +68,7 @@ const Profile = () => {
       }
       // Use the correct endpoint (mounted at /api/register)
       const response = await axios.put(
-        `http://127.0.0.1:5000/api/register/${user._id}`,
+        `https://rarely.onrender.com/api/register/${user._id}`,
         updateData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -115,7 +115,7 @@ const Profile = () => {
   
     try {
       const response = await axios.post(
-        `http://127.0.0.1:5000/api/profile/upload/${user._id}`,
+        `https://rarely.onrender.com/api/profile/upload/${user._id}`,
         form,
         {
           headers: {
@@ -136,7 +136,7 @@ const Profile = () => {
       
       // Update user profile with new profile picture
       const updateResponse = await axios.put(
-        `http://127.0.0.1:5000/api/users/${user._id}`,
+        `https://rarely.onrender.com/api/users/${user._id}`,
         { profilePicture: imageUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
