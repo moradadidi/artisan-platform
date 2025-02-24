@@ -30,7 +30,7 @@ import Profile from "./components/artisanDash/Profile";
 import "./App.css";
 import OrderConfirmation from "./components/pages/OrderConfirmation";
 import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./components/ResetPassword";
+import ResetPassword from "./components/pages/ResetPassword";
 import { Chatbot } from "./components/Chatbot";
 
 /** Private Route Check */
