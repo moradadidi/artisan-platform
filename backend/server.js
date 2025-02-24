@@ -47,7 +47,12 @@ app.use('/api/favorites', favoriteRouter);
 app.use('/api/reviews', reviewRouter);
 app.use("/api/verify-email", verifyRouter);
 
+app.use(express.static(path.join(__dirname, 'dist')));
 
+// For any other requests, serve the index.html from the dist folder
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 // 🌍 Server Setup
 const PORT = process.env.PORT || 5000;
