@@ -19,20 +19,12 @@ import reviewRouter from './routes/review.js';
 import verifyRouter from './routes/verifyRouter.js';
 
 // Load Environment Variables
-dotenv.config();
-
-// ------------------------------------------------------------------
-// Add path import and define __dirname (for ES Modules)
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// ------------------------------------------------------------------
+dotenv.config(); 
 
 const app = express();
 
 // 🛠️ Middleware
-app.use(express.json());
+app.use(express.json()); 
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
@@ -49,19 +41,13 @@ app.use('/api/users', usersRouter);
 app.use('/api/products', productRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/cart', cartRouter);
-app.use('/api/upload', uploadRouter);
+app.use('/api/upload', uploadRouter); 
 app.use('/api/profile/upload', profileUploadRouter);
 app.use('/api/favorites', favoriteRouter);
 app.use('/api/reviews', reviewRouter);
-app.use('/api/verify-email', verifyRouter);
+app.use("/api/verify-email", verifyRouter);
 
-// If you have a frontend build (e.g., React/Vite) to serve, use this middleware:
-app.use(express.static(path.join(__dirname, 'dist')));
 
-// Optional catch-all: for any routes not handled by your API, serve the index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
 
 // 🌍 Server Setup
 const PORT = process.env.PORT || 5000;
