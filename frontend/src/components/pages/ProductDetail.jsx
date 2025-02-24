@@ -140,7 +140,7 @@ const ProductDetail = () => {
         setFavoriteId(null);
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Error toggling favorites:', error);
       toast.error('Error updating favorites. Please try again.');
     }
   };
