@@ -38,11 +38,11 @@ userRouter.get("/verify-email/:token", async (req, res) => {
       return res.status(400).json({ error: "Invalid token" });
     }
     if (user.isVerified) {
-      return res.redirect("http://localhost:5173/login?msg=Email+already+verified");
+      return res.redirect("https://rarely-frontend.onrender.com/login?msg=Email+already+verified");
     }
     user.isVerified = true;
     await user.save();
-    return res.redirect("http://localhost:5173/login?msg=Email+verified+successfully");
+    return res.redirect("https://rarely-frontend.onrender.com/login?msg=Email+verified+successfully");
   } catch (error) {
     console.error("Email verification error:", error);
     if (error.name === "TokenExpiredError") {
@@ -266,8 +266,8 @@ userRouter.get("/reset-password", async (req, res) => {
       return res.status(400).send("Invalid or missing token.");
     }
     // Instead of showing an HTML form here, redirect to your front-end page
-    // e.g. "http://localhost:5173/reset-password?token=..."
-    return res.redirect(`http://localhost:5173/reset-password?token=${encodeURIComponent(token)}`);
+    // e.g. "https://rarely-frontend.onrender.com/reset-password?token=..."
+    return res.redirect(`https://rarely-frontend.onrender.com/reset-password?token=${encodeURIComponent(token)}`);
   } catch (error) {
     console.error("Reset password (GET) error:", error);
     return res.status(500).send("Server error");

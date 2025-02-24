@@ -75,13 +75,13 @@ function ArtisanSidebar() {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <img
-              src={user.profilePicture ?? "../../public/default.png"}
+              src={user.profilePicture ?? "/default.png"}
               alt="User Avatar"
               className="w-10 h-10 rounded-full"
             />
             <Box
               component="img"
-              src="../../public/logo.png"
+              src="/logo.png"
               alt="logo image"
               sx={{
                 width: "70%",

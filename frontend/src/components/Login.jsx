@@ -95,7 +95,7 @@ export default function LoginForm() {
         {/* Logo Area */}
         <Box sx={{ textAlign: 'center', mb: 2 }}>
           <img 
-            src="../../public/logo.png" 
+            src="/logo.png" 
             alt="Logo" 
             style={{ maxWidth: '150px', marginBottom: '10px', marginLeft: 'auto', marginRight: 'auto' }} 
           />

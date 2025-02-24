@@ -21,7 +21,7 @@ import {
 const Logo = () => (
   <Box sx={{ textAlign: 'center' }}>
     <img
-      src="../../public/logo.png"
+      src="/logo.png"
       alt="Logo"
       style={{ maxWidth: '150px', margin: '0 auto' }}
     />

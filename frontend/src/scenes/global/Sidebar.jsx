@@ -202,7 +202,7 @@ function App() {
                 <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                   <Box
                     component="img"
-                    src="../../../public/Logo.png"
+                    src="/logo.png"
                     sx={{ width: '45%', height: '100%' , borderRadius: '95%' }}
                   />
                 </Link>

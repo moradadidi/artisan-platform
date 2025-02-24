@@ -278,7 +278,7 @@ console.log("the user :" , user)
                 
                 {/* Profile Menu */}
                 <IconButton 
-                  onClick={handleProfileClick}
+                  // onClick={handleProfileClick}
                   sx={{ 
                     padding: { xs: '6px', sm: '8px' },
                   }}
