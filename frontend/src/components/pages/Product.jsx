@@ -36,7 +36,7 @@ import {
   ArrowUpRight,
   MapPin,
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate  , useLocation} from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -57,26 +57,6 @@ const Products = () => {
     document.title = "Shop - Rarely";
   }, []);
 
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Search state (synchronized with URL)
-  const [searchQuery, setSearchQuery] = useState("");
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const query = params.get("search");
-    if (query) {
-      setSearchQuery(decodeURIComponent(query));
-    } else {
-      setSearchQuery("");
-    }
-  }, [location.search]);
-
-  // When user submits a search, update URL.
-  const handleSearchSubmit = () => {
-    const trimmed = searchQuery.trim();
-    navigate(`/shop?search=${encodeURIComponent(trimmed)}`);
-  };
 
   const [products, setProducts] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 2000]);
@@ -84,7 +64,18 @@ const Products = () => {
     "All Categories",
   ]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true); // For showing a loading state
+  const navigate = useNavigate();
+
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get("search") || "";
+    setSearchQuery(decodeURIComponent(query));
+  }, [location.search]);
+  
+
 
   const user = JSON.parse(sessionStorage.getItem("user"));
   const token = sessionStorage.getItem("token");
@@ -182,19 +173,8 @@ const Products = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams();
-      if (searchQuery.trim()) {
-        queryParams.append("search", searchQuery.trim());
-      }
-      queryParams.append("minPrice", priceRange[0]);
-      queryParams.append("maxPrice", priceRange[1]);
-      if (!selectedCategories.includes("All Categories")) {
-        queryParams.append("categories", selectedCategories.join(","));
-      }
-      const response = await axios.get(
-        `https://rarely.onrender.com/api/products?${queryParams.toString()}`
-      );
-      const data = response.data;
+      const response = await fetch("https://rarely.onrender.com/api/products");
+      const data = await response.json();
       const formattedProducts = data.map((product) => ({
         id: product._id,
         name: product.name,
@@ -203,7 +183,7 @@ const Products = () => {
         reviews: product.numReviews || 0,
         image: product.images[0] || "",
         artisan: {
-          id: product.user._id || "0",
+          id: product.user._id || 0,
           name: product.user.name || "Unknown",
           avatar: product.user.profilePicture || "",
           location: product.user.adresse || "Canada, Ontario",
@@ -220,7 +200,9 @@ const Products = () => {
       if (user && token) {
         const favResponse = await axios.get(
           `https://rarely.onrender.com/api/favorites/${user._id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         const favoritesData = favResponse.data;
         const favoritesMap = {};
@@ -243,20 +225,32 @@ const Products = () => {
     }
   };
 
-  // Debounce the API call when filters change.
   useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      fetchProducts();
-    }, 500);
-    return () => clearTimeout(debounceTimeout);
-  }, [searchQuery, priceRange, selectedCategories]);
+    fetchProducts();
+  }, []);
 
-  // Assume API returns correctly filtered products.
-  const filteredProducts = products;
-
-  // Filtering UI (Sidebar/Drawer) without search input.
+  // Filtering UI (Sidebar/Drawer)
   const FilterContent = () => (
     <Box sx={{ p: 3 }}>
+      {/* Search */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          backgroundColor: "#f5f5f5",
+          borderRadius: "8px",
+          p: 1,
+          mb: 3,
+        }}
+      >
+        <Search size={20} color="#666" />
+        <InputBase
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ ml: 1, flex: 1 }}
+        />
+      </Box>
       {/* Categories */}
       <Typography variant="subtitle1" gutterBottom>
         Categories
@@ -295,7 +289,7 @@ const Products = () => {
       <Button
         variant="contained"
         fullWidth
-        sx={{ mt: 3 , backgroundColor: "#FFD700", color: "black" }}
+        sx={{ mt: 3 }}
         onClick={() => setDrawerOpen(false)} // Closes drawer on mobile
       >
         Apply Filters
@@ -304,7 +298,7 @@ const Products = () => {
   );
 
   // Product Card Component.
-  const ProductCardComponent = ({ product, index }) => (
+  const ProductCard = ({ product, index }) => (
     <Grow in timeout={300 + index * 50}>
       <Card
         sx={{
@@ -318,6 +312,7 @@ const Products = () => {
           },
         }}
       >
+        {/* Make the entire card clickable via CardActionArea */}
         <CardActionArea onClick={() => navigate(`/products/${product.id}`)}>
           <Box sx={{ position: "relative" }}>
             <CardMedia
@@ -372,7 +367,9 @@ const Products = () => {
               />
             )}
           </Box>
-          <CardContent sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+          <CardContent
+            sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
+          >
             {/* Artisan Info */}
             <Box
               sx={{
@@ -409,7 +406,11 @@ const Products = () => {
               </Box>
               <Box sx={{ ml: "auto", textAlign: "right" }}>
                 <Rating value={product.artisan.rating} size="small" readOnly />
-                <Typography variant="caption" color="text.secondary" display="block">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                >
                   {product.artisan.reviews} reviews
                 </Typography>
               </Box>
@@ -428,7 +429,12 @@ const Products = () => {
             </Typography>
             <Box sx={{ mb: 1, display: "flex", flexWrap: "wrap" }}>
               {product.tags.map((tag) => (
-                <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                <Chip
+                  key={tag}
+                  label={tag}
+                  size="small"
+                  sx={{ mr: 0.5, mb: 0.5 }}
+                />
               ))}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
@@ -463,10 +469,14 @@ const Products = () => {
                       handleAddToCart(product.id);
                     }}
                     sx={{
-                      backgroundColor: product.inStock ? "#fdd835" : "grey.200",
+                      backgroundColor: product.inStock
+                        ? "primary.main"
+                        : "grey.200",
                       color: "white",
                       "&:hover": {
-                        backgroundColor: product.inStock ? "#f9a825" : "grey.200",
+                        backgroundColor: product.inStock
+                          ? "primary.dark"
+                          : "grey.200",
                       },
                     }}
                   >
@@ -480,6 +490,20 @@ const Products = () => {
       </Card>
     </Grow>
   );
+
+  // Compute filtered products based on price, category, and search query.
+  const filteredProducts = products.filter((product) => {
+    const withinPrice =
+      product.price >= priceRange[0] && product.price <= priceRange[1];
+    const categoryMatch =
+      selectedCategories.includes("All Categories") ||
+      selectedCategories.includes(product.category);
+    const searchMatch =
+      searchQuery.trim() === "" ||
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.tags.join(" ").toLowerCase().includes(searchQuery.toLowerCase());
+    return withinPrice && categoryMatch && searchMatch;
+  });
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
@@ -513,9 +537,6 @@ const Products = () => {
       {/* Main Products Grid */}
       <Box sx={{ flex: 1, p: 3 }}>
         <Container maxWidth="xl">
-          {/* Top Search Bar (outside of FilterContent) */}
-          
-
           {/* Header & Breadcrumbs */}
           <Box sx={{ mb: 4 }}>
             <Breadcrumbs sx={{ mb: 2 }}>
@@ -534,38 +555,14 @@ const Products = () => {
               <Typography variant="h4" gutterBottom>
                 All Products
               </Typography>
-              {/* <Box sx={{ display: "flex", gap: 2 }}>
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <Button variant="outlined" startIcon={<Star />}>
                   Popular
                 </Button>
                 <Button variant="outlined" startIcon={<ArrowUpRight />}>
                   Latest
                 </Button>
-              </Box> */}
-              <Box
-            sx={{
-              mb: 2,
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "#f5f5f5",
-              borderRadius: "8px",
-              p: 1,
-            }}
-          >
-            <Search size={20} color="#666" />
-            <InputBase
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearchSubmit();
-              }}
-              sx={{ ml: 1, flex: 1 }}
-            />
-            <Button  onClick={handleSearchSubmit}>
-              <Search size={20} />
-            </Button>
-          </Box>
+              </Box>
             </Box>
           </Box>
 
@@ -592,19 +589,21 @@ const Products = () => {
           {!loading && (
             <>
               {filteredProducts.length === 0 ? (
+                // No Products Found
                 <Box sx={{ textAlign: "center", mt: 5 }}>
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     No products found
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Try adjusting your filters or search to find what you’re looking for.
+                    Try adjusting your filters or search to find what you’re
+                    looking for.
                   </Typography>
                 </Box>
               ) : (
                 <Grid container spacing={4}>
                   {filteredProducts.map((product, index) => (
                     <Grid item xs={12} sm={12} md={6} lg={4} key={product.id}>
-                      <ProductCardComponent product={product} index={index} />
+                      <ProductCard product={product} index={index} />
                     </Grid>
                   ))}
                 </Grid>
