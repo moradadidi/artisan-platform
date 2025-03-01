@@ -1,11 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, Send, X, Bot, Loader2, User } from 'lucide-react';
+import { MessageCircle, Send, X, Bot, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
   text: string;
   isBot: boolean;
   timestamp: Date;
+}
+
+// Custom type for the code component to include the inline property.
+interface CustomCodeProps {
+  node: any;
+  inline?: boolean;
+  className?: string;
+  children: React.ReactNode;
+  [key: string]: any;
 }
 
 export function Chatbot() {
@@ -32,7 +41,7 @@ export function Chatbot() {
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: 'numeric',
-      hour12: true
+      hour12: true,
     }).format(date);
   };
 
@@ -41,35 +50,58 @@ export function Chatbot() {
 
     const userMessage = { text: input, isBot: false, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
+    // Save the current input to use in the API call
+    const messageToSend = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + import.meta.env.VITE_GEMINI_API_KEY, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: input
-            }]
-          }]
-        })
-      });
-
-      const data = await response.json();
-      const botResponse = data.candidates[0].content.parts[0].text;
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' +
+          import.meta.env.VITE_GEMINI_API_KEY,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: messageToSend,
+                  },
+                ],
+              },
+            ],
+          }),
+        }
+      );
       
-      setMessages(prev => [...prev, { text: botResponse, isBot: true, timestamp: new Date() }]);
+      const data = await response.json();
+      // Log the response for debugging
+      console.log('API response:', data);
+
+      const botResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!botResponse) {
+        throw new Error('Invalid response structure from API.');
+      }
+
+      setMessages(prev => [
+        ...prev,
+        { text: botResponse, isBot: true, timestamp: new Date() },
+      ]);
     } catch (error) {
       console.error('Error:', error);
-      setMessages(prev => [...prev, { 
-        text: "I apologize, but I couldn't process that request. Please try again.", 
-        isBot: true, 
-        timestamp: new Date() 
-      }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          text: "I apologize, but I couldn't process that request. Please try again.",
+          isBot: true,
+          timestamp: new Date(),
+        },
+      ]);
     }
 
     setIsLoading(false);
@@ -123,21 +155,31 @@ export function Chatbot() {
               <div className="bg-yellow-100 p-4 rounded-full mb-4">
                 <Bot className="w-12 h-12 text-yellow-600" />
               </div>
-              <p className="text-center font-medium text-yellow-800">Hi! I'm your Artisan Assistant.</p>
-              <p className="text-center text-sm text-yellow-600 mt-2">How can I help you today?</p>
+              <p className="text-center font-medium text-yellow-800">
+                Hi! I'm your Artisan Assistant.
+              </p>
+              <p className="text-center text-sm text-yellow-600 mt-2">
+                How can I help you today?
+              </p>
             </div>
           )}
-          
+
           {messages.map((message, index) => (
             <div
               key={index}
               className={`mb-6 flex ${message.isBot ? 'justify-start' : 'justify-end'}`}
             >
-              <div className={`flex gap-3 max-w-[85%] ${message.isBot ? 'flex-row' : 'flex-row-reverse'}`}>
-                <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1
-                  ${message.isBot ? 'bg-yellow-100' : 'bg-yellow-400'}
-                `}>
+              <div
+                className={`flex gap-3 max-w-[85%] ${
+                  message.isBot ? 'flex-row' : 'flex-row-reverse'
+                }`}
+              >
+                <div
+                  className={`
+                    w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1
+                    ${message.isBot ? 'bg-yellow-100' : 'bg-yellow-400'}
+                  `}
+                >
                   <img
                     src={message.isBot ? './logo.png' : user?.profilePicture || './default.png'}
                     alt={message.isBot ? 'Bot' : 'User'}
@@ -147,30 +189,35 @@ export function Chatbot() {
                 <div className="flex flex-col gap-1">
                   <div
                     className={`p-4 rounded-2xl shadow-sm
-                      ${message.isBot 
-                        ? 'bg-white text-gray-800 rounded-tl-none border border-yellow-100' 
-                        : 'bg-yellow-400 text-yellow-900 rounded-tr-none'}
+                      ${
+                        message.isBot
+                          ? 'bg-white text-gray-800 rounded-tl-none border border-yellow-100'
+                          : 'bg-yellow-400 text-yellow-900 rounded-tr-none'
+                      }
                     `}
                   >
                     <div className="prose prose-sm max-w-none">
                       <ReactMarkdown
                         components={{
-                          p: ({node, ...props}) => <p className="m-0" {...props} />,
-                          ul: ({node, ...props}) => <ul className="m-0 pl-4" {...props} />,
-                          ol: ({node, ...props}) => <ol className="m-0 pl-4" {...props} />,
-                          li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                          code: ({node, inline, ...props}) => (
-                            inline 
-                              ? <code className="bg-yellow-50 px-1 py-0.5 rounded text-sm" {...props} />
-                              : <code className="block bg-yellow-50 p-2 rounded-lg text-sm my-2 overflow-x-auto" {...props} />
-                          )
+                          p: ({ node, ...props }) => <p className="m-0" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="m-0 pl-4" {...props} />,
+                          ol: ({ node, ...props }) => <ol className="m-0 pl-4" {...props} />,
+                          li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                          code: ({ node, inline, ...props }: CustomCodeProps) =>
+                            inline ? (
+                              <code className="bg-yellow-50 px-1 py-0.5 rounded text-sm" {...props} />
+                            ) : (
+                              <code className="block bg-yellow-50 p-2 rounded-lg text-sm my-2 overflow-x-auto" {...props} />
+                            ),
                         }}
                       >
                         {message.text}
                       </ReactMarkdown>
                     </div>
                   </div>
-                  <span className={`text-xs ${message.isBot ? 'text-left' : 'text-right'} text-gray-500`}>
+                  <span
+                    className={`text-xs ${message.isBot ? 'text-left' : 'text-right'} text-gray-500`}
+                  >
                     {formatTime(message.timestamp)}
                   </span>
                 </div>
@@ -185,9 +232,18 @@ export function Chatbot() {
                 </div>
                 <div className="bg-white border border-yellow-100 p-4 rounded-2xl rounded-tl-none shadow-sm">
                   <div className="flex gap-2">
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div
+                      className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <div
+                      className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    />
                   </div>
                 </div>
               </div>
@@ -198,7 +254,7 @@ export function Chatbot() {
 
         {/* Input */}
         <div className="p-4 bg-white border-t border-yellow-100">
-          <form 
+          <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSend();

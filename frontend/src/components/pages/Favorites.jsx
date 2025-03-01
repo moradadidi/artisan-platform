@@ -118,7 +118,7 @@ const Favorites = () => {
             height="260"
             image={product.images?.[0] || '/default.png'}
             alt={product.name}
-            sx={{ objectFit: 'cover', cursor: 'pointer' }}
+            sx={{ objectFit: 'cover', cursor: 'pointer' , aspectRatio: '1/1'}}
             onClick={() => navigate(`/products/${product._id}`)}
           />
           {/* Remove from favorites icon */}

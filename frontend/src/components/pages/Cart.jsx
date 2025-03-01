@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Grid,
@@ -21,20 +21,20 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
+  MenuItem
 } from '@mui/material';
 import {
   Minus,
   Plus,
   Trash2,
   ArrowLeft,
-  CreditCard,
   Truck,
-  MapPin,
+  MapPin
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 
 const Cart = () => {
   // Set page title
@@ -64,11 +64,7 @@ const Cart = () => {
     country: '',
   });
 
-
-  const [cardNumber, setCardNumber] = useState('');
-    const [expiry, setExpiry] = useState('');
-    const [cvv, setCvv] = useState('');
-    const [cardName, setCardName] = useState('');
+  // Remove card state variables – now using PayPal
 
   // Fetch the cart from the API
   useEffect(() => {
@@ -81,8 +77,6 @@ const Cart = () => {
           `https://rarely.onrender.com/api/cart/user/${user._id}`
         );
         const cartData = response.data; // array of carts
-
-        // If we have at least one cart, store its ID and products
         if (cartData && cartData.length > 0) {
           const cart = cartData[0];
           setCartId(cart._id);
@@ -101,14 +95,13 @@ const Cart = () => {
   // Update Quantity (local state + backend PATCH)
   // ---------------------------------------------
   const updateQuantity = async (productId, change) => {
-    // 1) Find the item in local state
     const itemIndex = items.findIndex((item) => item.productId._id === productId);
     if (itemIndex === -1) return;
 
     const oldQuantity = items[itemIndex].quantity;
     const newQuantity = Math.max(1, oldQuantity + change);
 
-    // 2) Optimistically update local state
+    // Optimistically update local state
     setItems((prevItems) =>
       prevItems.map((item, idx) =>
         idx === itemIndex ? { ...item, quantity: newQuantity } : item
@@ -116,17 +109,14 @@ const Cart = () => {
     );
 
     try {
-      // 3) Update quantity in the backend
       await axios.patch(
         `https://rarely.onrender.com/api/cart/${cartId}/product/${productId}`,
         { quantity: newQuantity }
       );
     } catch (error) {
-      // If error, revert local state
       console.error('Error updating quantity:', error);
       toast.error('Failed to update quantity. Please try again.');
-
-      // Revert to old quantity in local state
+      // Revert local state on error
       setItems((prevItems) =>
         prevItems.map((item, idx) =>
           idx === itemIndex ? { ...item, quantity: oldQuantity } : item
@@ -138,11 +128,9 @@ const Cart = () => {
   // Remove item from the cart
   const removeItem = async (productId) => {
     try {
-      // Remove item from local state
       setItems((prevItems) =>
         prevItems.filter((item) => item.productId._id !== productId)
       );
-      // Remove from backend
       await axios.delete(
         `https://rarely.onrender.com/api/cart/${cartId}/product/${productId}`
       );
@@ -178,64 +166,47 @@ const Cart = () => {
 
   // Next/Back Step Handlers
   const handleNext = () => {
-    // If we are on Shipping step, we could validate shippingData here.
-    // If we are on Payment step, we could validate paymentData here.
     setActiveStep((prev) => prev + 1);
   };
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
 
-  // Place Order
+  // Place Order – called after successful PayPal payment
   const handlePlaceOrder = async () => {
     try {
-      // Ensure the user is logged in
       const user = JSON.parse(sessionStorage.getItem('user'));
       if (!user) {
         toast.error('You must be logged in to place an order.');
         return;
       }
-  
-      // Validate that all required shipping fields are provided
       const { fullName, address, city, state, postalCode, country } = shippingData;
       if (!fullName || !address || !city || !state || !postalCode || !country) {
         toast.error('Please fill out all shipping information.');
         return;
       }
-  
-      // Combine shipping data into a single shippingAddress string
       const shippingAddress = `${fullName}, ${address}, ${city}, ${state}, ${postalCode}, ${country}`;
-  
-      // Map the cart items to the order format required by your Order model
       const orderProducts = items.map(item => ({
         productId: item.productId._id,
         quantity: item.quantity,
         price: item.productId.price,
       }));
-  
-      // Build the order payload
       const payload = {
         customerId: user._id,
         products: orderProducts,
-        totalAmount:total,
+        totalAmount: total,
         shippingAddress,
       };
-  
-      // Send a POST request to create the order
       const response = await axios.post(
         'https://rarely.onrender.com/api/orders',
         payload,
         { headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` } }
       );
-  
       if (response.data.success) {
         toast.success('Order placed successfully!');
-        // Optionally clear the cart here or navigate to a confirmation page
-        navigate('/order-confirmation');
-
-        // Clear the cart
         await axios.delete(`https://rarely.onrender.com/api/cart/${cartId}`);
         setItems([]);
+        navigate('/order-confirmation');
       } else {
         toast.error('Failed to place order. Please try again.');
       }
@@ -244,13 +215,13 @@ const Cart = () => {
       toast.error('Error placing order. Please try again.');
     }
   };
-  
 
-  // CartItem component: renders each item in the cart
+  // -------------------------
+  // Render individual Cart Item
+  // -------------------------
   const CartItem = ({ item }) => {
-    const product = item.productId; // Contains all product details
+    const product = item.productId;
     if (!product) return null;
-
     return (
       <Card
         sx={{
@@ -274,29 +245,16 @@ const Cart = () => {
               }}
             />
           </Grid>
-
           {/* Product Info */}
           <Grid item xs={12} sm={8}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-              }}
-            >
-              {/* Title */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <Typography
                 variant="h6"
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': { color: 'primary.main' },
-                }}
+                sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
                 onClick={() => navigate(`/products/${product._id}`)}
               >
                 {product.name}
               </Typography>
-
-              {/* Artisan Info */}
               <Box
                 sx={{
                   display: 'flex',
@@ -306,9 +264,7 @@ const Cart = () => {
                   cursor: 'pointer',
                   '&:hover .artisan-name': { color: 'primary.main' },
                 }}
-                onClick={() =>
-                  navigate(`/artisans/${product.user?._id || ''}`)
-                }
+                onClick={() => navigate(`/artisans/${product.user?._id || ''}`)}
               >
                 <Avatar
                   src={product.user?.profilePicture || '/default.png'}
@@ -337,36 +293,19 @@ const Cart = () => {
                   </Typography>
                 </Box>
               </Box>
-
-              {/* Category */}
               {product.category && (
                 <Box sx={{ mb: 1 }}>
                   <Chip label={product.category} size="small" />
                 </Box>
               )}
-
-              {/* Description */}
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 2, flexGrow: 1 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexGrow: 1 }}>
                 {product.description?.slice(0, 80)}...
               </Typography>
-
-              {/* Price, Quantity, Remove */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" color="primary">
                   ${product.price}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  {/* Quantity Controls */}
                   <Box
                     sx={{
                       display: 'flex',
@@ -384,9 +323,7 @@ const Cart = () => {
                     >
                       <Minus size={16} />
                     </IconButton>
-                    <Typography sx={{ px: 2, py: 1 }}>
-                      {item.quantity}
-                    </Typography>
+                    <Typography sx={{ px: 2, py: 1 }}>{item.quantity}</Typography>
                     <IconButton
                       size="small"
                       onClick={() => updateQuantity(product._id, 1)}
@@ -396,8 +333,6 @@ const Cart = () => {
                       <Plus size={16} />
                     </IconButton>
                   </Box>
-
-                  {/* Remove Button */}
                   <IconButton
                     color="error"
                     onClick={() => removeItem(product._id)}
@@ -414,30 +349,22 @@ const Cart = () => {
     );
   };
 
-  // Renders the Cart step
+  // -------------------------
+  // Render the Cart Step
+  // -------------------------
   const renderCartStep = () => {
     return (
       <>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <Button
-            component={Link}
-            to="/shop"
-            startIcon={<ArrowLeft />}
-            sx={{ mr: 2 }}
-          >
+          <Button component={Link} to="/shop" startIcon={<ArrowLeft />} sx={{ mr: 2 }}>
             Continue Shopping
           </Button>
           <Typography variant="h5">
-            Shopping Cart ({items.length}{' '}
-            {items.length === 1 ? 'item' : 'items'})
+            Shopping Cart ({items.length} {items.length === 1 ? 'item' : 'items'})
           </Typography>
         </Box>
-
-        {/* List of Cart Items or Empty State */}
         {items.length > 0 ? (
-          items.map((item) => (
-            <CartItem key={item._id} item={item} />
-          ))
+          items.map((item) => <CartItem key={item._id} item={item} />)
         ) : (
           <Paper sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="h6" gutterBottom>
@@ -446,12 +373,7 @@ const Cart = () => {
             <Typography color="text.secondary" paragraph>
               Add some items to your cart to continue shopping
             </Typography>
-            <Button
-              component={Link}
-              to="/shop"
-              variant="contained"
-              color="primary"
-            >
+            <Button component={Link} to="/shop" variant="contained" color="primary">
               Browse Products
             </Button>
           </Paper>
@@ -460,7 +382,9 @@ const Cart = () => {
     );
   };
 
-  // Renders the Shipping step
+  // -------------------------
+  // Render the Shipping Step
+  // -------------------------
   const renderShippingStep = () => {
     const handleChange = (e) => {
       const { name, value } = e.target;
@@ -512,67 +436,69 @@ const Cart = () => {
           value={shippingData.postalCode}
           onChange={handleChange}
         />
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>Country</InputLabel>
-          <Select
-            name="country"
-            value={shippingData.country}
-            onChange={handleChange}
-            label="Country"
-          >
-            <MenuItem value="USA">USA</MenuItem>
-            <MenuItem value="Canada">Canada</MenuItem>
-            <MenuItem value="UK">UK</MenuItem>
-            <MenuItem value="Australia">Australia</MenuItem>
-            {/* Add more countries as needed */}
-          </Select>
-        </FormControl>
+      <TextField
+  name="country"
+  label="Country"
+  fullWidth
+  value={shippingData.country}
+  onChange={handleChange}
+  placeholder="Select a country"
+  sx={{ mb: 2 }}
+  InputProps={{
+    inputProps: { list: 'country-list' }
+  }}
+/>
+<datalist id="country-list">
+  <option value="USA" />
+  <option value="Canada" />
+  <option value="UK" />
+  <option value="Australia" />
+</datalist>
+
       </Box>
     );
   };
 
-  // Renders the Payment step
+  // -------------------------
+  // Render the Payment Step using PayPal
+  // -------------------------
   const renderPaymentStep = () => {
-    
-
     return (
       <Box sx={{ maxWidth: 600, mx: 'auto' }}>
         <Typography variant="h5" sx={{ mb: 3 }}>
           Payment Information
         </Typography>
-        <TextField
-          label="Card Number"
-          fullWidth
-          sx={{ mb: 2 }}
-          value={cardNumber}
-          onChange={(e) => setCardNumber(e.target.value)}
-        />
-        <TextField
-          label="Expiry (MM/YY)"
-          fullWidth
-          sx={{ mb: 2 }}
-          value={expiry}
-          onChange={(e) => setExpiry(e.target.value)}
-        />
-        <TextField
-          label="CVV"
-          fullWidth
-          sx={{ mb: 2 }}
-          value={cvv}
-          onChange={(e) => setCvv(e.target.value)}
-        />
-        <TextField
-          label="Name on Card"
-          fullWidth
-          sx={{ mb: 2 }}
-          value={cardName}
-          onChange={(e) => setCardName(e.target.value)}
-        />
+        <PayPalScriptProvider options={{ "client-id": "AT82GQ0vqHQ_rGJ_8VlGcFxANwft6xeesJ4rnYBAOligOpSyZKRpOfF3RpZhOEa6tV53mlR1_VZ_etEe", currency: "USD" }}>
+          <PayPalButtons
+            style={{ layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' }}
+            createOrder={(data, actions) => {
+              return actions.order.create({
+                purchase_units: [{
+                  amount: {
+                    value: total.toFixed(2),
+                  },
+                }],
+              });
+            }}
+            onApprove={(data, actions) => {
+              return actions.order.capture().then((details) => {
+                // Payment successful: place the order
+                handlePlaceOrder();
+              });
+            }}
+            onError={(err) => {
+              console.error("PayPal Checkout onError", err);
+              toast.error("Payment failed, please try again.");
+            }}
+          />
+        </PayPalScriptProvider>
       </Box>
     );
   };
 
-  // Renders the content based on activeStep
+  // -------------------------
+  // Render content based on active step
+  // -------------------------
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
@@ -586,7 +512,6 @@ const Cart = () => {
     }
   };
 
-  // Decide the button text based on step
   const isLastStep = activeStep === 2;
 
   return (
@@ -603,10 +528,8 @@ const Cart = () => {
       </Box>
 
       <Grid container spacing={4}>
-        {/* Main Step Content */}
         <Grid item xs={12} md={8}>
           {renderStepContent(activeStep)}
-
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
             <Button
               variant="outlined"
@@ -619,22 +542,15 @@ const Cart = () => {
             <Button
               variant="contained"
               color="primary"
-              onClick={
-                isLastStep
-                  ? handlePlaceOrder
-                  : handleNext
-              }
-              disabled={
-                activeStep === 0 && items.length === 0
-              }
-              startIcon={isLastStep ? <CreditCard /> : null}
+              onClick={isLastStep ? handlePlaceOrder : handleNext}
+              disabled={activeStep === 0 && items.length === 0}
+              startIcon={isLastStep ? null : null}
             >
               {isLastStep ? 'Place Order' : 'Next'}
             </Button>
           </Box>
         </Grid>
 
-        {/* Order Summary on the right */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 3, position: 'sticky', top: 100 }}>
             <Typography variant="h6" gutterBottom>
@@ -702,10 +618,6 @@ const Cart = () => {
                 </Grid>
               </Grid>
             </Box>
-
-            {/* Step-based button changes: 
-                We hide "Proceed to Checkout" if user is not on Cart step 
-                or if the cart is empty. */}
             {activeStep === 0 && (
               <Button
                 variant="contained"
@@ -719,7 +631,6 @@ const Cart = () => {
                 Proceed to Checkout
               </Button>
             )}
-
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Truck size={20} />
               <Typography variant="body2" color="text.secondary">

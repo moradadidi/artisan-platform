@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AppBar, 
   Toolbar, 
@@ -32,14 +32,13 @@ import {
   User,
   Package,
   LogIn,
-  UserPlus ,
+  UserPlus,
   X,
   ChevronRight,
   Bell,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useEffect } from 'react';
 import { useUserAuth } from '../UserAuthContext';
 
 function HideOnScroll({ children }) {
@@ -60,10 +59,9 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const userParsed = JSON.parse(sessionStorage.getItem('user') || '{}');
-  const [countCart , setCountCart] = useState(0);
-  const {user} = useUserAuth();
+  const [countCart, setCountCart] = useState(0);
+  const { user } = useUserAuth();
 
-console.log("the user :" , user)
   const isActiveRoute = (path) => location.pathname === path;
 
   const handleProfileClick = (event) => {
@@ -85,7 +83,6 @@ console.log("the user :" , user)
   const fetchCountCart = async () => {
     try {
       const response = await axios.get(`http://localhost:5000/api/cart/count/${userParsed._id}`);
-      console.log(response.data);
       setCountCart(response.data);
     } catch (error) {
       console.error('Error fetching cart count:', error);
@@ -95,14 +92,21 @@ console.log("the user :" , user)
   useEffect(() => {
     fetchCountCart();
   }, []);
+
   const handleLogout = () => {
     handleProfileClose();
+    // Perform additional logout logic if needed.
+  };
+
+  // NEW: Search handling. Navigates to /shop with the search query.
+  const handleSearch = () => {
+    if (searchQuery.trim() !== '') {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+    }
   };
 
   const navItems = [
-    { path: '/discover', label: 'Discover' },
     { path: '/shop', label: 'Shop' },
-    // { path: '/artisans', label: 'Artisans' },
     { path: '/collections', label: 'Collections' },
     { path: '/about', label: 'About' },
   ];
@@ -144,15 +148,15 @@ console.log("the user :" , user)
                 textDecoration: 'none',
                 flexShrink: 0
               }}>
-                     <Box
-            component="img"
-            src="/logo.png" // Ensure your logo.png is in your public folder
-            alt="RARELY Logo"
-            sx={{
-              height: 50,
-              width: 'auto',
-            }}
-          />
+                <Box
+                  component="img"
+                  src="/logo.png"
+                  alt="RARELY Logo"
+                  sx={{
+                    height: 50,
+                    width: 'auto',
+                  }}
+                />
               </Link>
 
               {/* Search Bar - Desktop */}
@@ -175,6 +179,11 @@ console.log("the user :" , user)
                   placeholder="Search artisans and products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
                   sx={{ 
                     ml: 1,
                     flex: 1,
@@ -188,6 +197,9 @@ console.log("the user :" , user)
                     }
                   }}
                 />
+                <IconButton onClick={handleSearch}>
+                  <Search size={18} color="#666" />
+                </IconButton>
               </Box>
 
               {/* Search Icon - Mobile */}
@@ -240,7 +252,7 @@ console.log("the user :" , user)
                 ml: { xs: 0, md: 'auto' },
                 flexShrink: 0
               }}>
-                {/* <IconButton 
+                <IconButton 
                   component={Link} 
                   to="/favorites"
                   sx={{ 
@@ -251,7 +263,7 @@ console.log("the user :" , user)
                   <Badge badgeContent={0} color="error">
                     <Heart size={20} />
                   </Badge>
-                </IconButton> */}
+                </IconButton>
                 <IconButton 
                   component={Link} 
                   to="/cart"
@@ -260,8 +272,7 @@ console.log("the user :" , user)
                     padding: { xs: '6px', sm: '8px' },
                   }}
                 >
-                  
-                    <ShoppingCart size={20} />
+                  <ShoppingCart size={20} />
                 </IconButton>
 
                 {/* Notifications */}
@@ -272,40 +283,32 @@ console.log("the user :" , user)
                     display: { xs: 'none', sm: 'flex' }
                   }}
                 >
-                  
-                    <Bell size={20} />
+                  <Bell size={20} />
                 </IconButton>
                 
                 {/* Profile Menu */}
                 <IconButton 
-                  // onClick={handleProfileClick}
-                  sx={{ 
-                    padding: { xs: '6px', sm: '8px' },
-                  }}
+                  sx={{ padding: { xs: '6px', sm: '8px' } }}
                 >
-                  
-                   <Box
-                          component="img"
-                          src={userParsed.profilePicture
-                            ?? "./default.png"}
-                          alt={`user image`}
-                          sx={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => {
-                            if (["artisan", "admin", "user"].includes(userParsed.role)) {
-                              window.location.href = "/artisan-dashboard";
-                            } else {
-                              setProfileMenu(event.currentTarget);
-                            }
-                            
-                          }
-                        }
-                        />
+                  <Box
+                    component="img"
+                    src={userParsed.profilePicture ?? "./default.png"}
+                    alt="user image"
+                    sx={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      if (["artisan", "admin", "user"].includes(userParsed.role)) {
+                        window.location.href = "/artisan-dashboard";
+                      } else {
+                        setProfileMenu(event.currentTarget);
+                      }
+                    }}
+                  />
                 </IconButton>
 
                 {/* Profile Dropdown Menu */}
@@ -334,7 +337,6 @@ console.log("the user :" , user)
                     <Typography variant="subtitle1" noWrap>
                       Create or access your account
                     </Typography>
-                   
                   </Box>
                   <Divider />
                   <MenuItem onClick={() => navigate('/login')}>
@@ -349,7 +351,6 @@ console.log("the user :" , user)
                     </ListItemIcon>
                     Register
                   </MenuItem>
-                  
                 </Menu>
               </Box>
             </Toolbar>
@@ -362,12 +363,7 @@ console.log("the user :" , user)
         anchor="left"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        sx={{ 
-          '& .MuiDrawer-paper': { 
-            width: '100%',
-            maxWidth: 360
-          }
-        }}
+        sx={{ '& .MuiDrawer-paper': { width: '100%', maxWidth: 360 } }}
       >
         <Box sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -376,7 +372,6 @@ console.log("the user :" , user)
               <X size={24} />
             </IconButton>
           </Box>
-
           <List sx={{ flex: 1 }}>
             {navItems.map((item) => (
               <ListItem key={item.path} disablePadding>
@@ -387,7 +382,9 @@ console.log("the user :" , user)
                   sx={{
                     borderRadius: 1,
                     mb: 1,
-                    backgroundColor: isActiveRoute(item.path) ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+                    backgroundColor: isActiveRoute(item.path)
+                      ? 'rgba(255, 215, 0, 0.1)'
+                      : 'transparent',
                   }}
                 >
                   <ListItemText 
@@ -395,8 +392,8 @@ console.log("the user :" , user)
                     primaryTypographyProps={{
                       style: {
                         color: isActiveRoute(item.path) ? '#FFD700' : '#333',
-                        fontWeight: 500
-                      }
+                        fontWeight: 500,
+                      },
                     }}
                   />
                   <ChevronRight size={20} />
@@ -404,18 +401,11 @@ console.log("the user :" , user)
               </ListItem>
             ))}
           </List>
-
           <Divider sx={{ my: 2 }} />
-
           <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Avatar 
-                sx={{ 
-                  width: 40, 
-                  height: 40,
-                  mr: 2,
-                  backgroundColor: 'primary.main'
-                }}
+                sx={{ width: 40, height: 40, mr: 2, backgroundColor: 'primary.main' }}
               >
                 <User size={24} />
               </Avatar>
@@ -446,9 +436,7 @@ console.log("the user :" , user)
         onClose={() => setSearchOpen(false)}
         sx={{ 
           display: { md: 'none' },
-          '& .MuiDrawer-paper': { 
-            pt: 8
-          }
+          '& .MuiDrawer-paper': { pt: 8 }
         }}
       >
         <Box sx={{ p: 2 }}>
@@ -465,72 +453,19 @@ console.log("the user :" , user)
               placeholder="Search artisans and products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if(e.key === 'Enter'){
+                  handleSearch();
+                }
+              }}
               sx={{ ml: 1, flex: 1 }}
             />
-            <IconButton size="small" onClick={() => setSearchOpen(false)}>
+            <IconButton size="small" onClick={handleSearch}>
               <X size={20} />
             </IconButton>
           </Box>
         </Box>
       </Drawer>
-
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notificationsMenu}
-        open={Boolean(notificationsMenu)}
-        onClose={handleNotificationsClose}
-        onClick={handleNotificationsClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          elevation: 2,
-          sx: {
-            mt: 1.5,
-            width: 320,
-            borderRadius: 2,
-          },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Notifications
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            You have 3 new notifications
-          </Typography>
-        </Box>
-        <Divider />
-        <MenuItem sx={{ py: 2 }}>
-          <Box>
-            <Typography variant="subtitle2">
-              New order received
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Order #1234 has been placed
-            </Typography>
-          </Box>
-        </MenuItem>
-        <MenuItem sx={{ py: 2 }}>
-          <Box>
-            <Typography variant="subtitle2">
-              Product back in stock
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Ceramic Vase is now available
-            </Typography>
-          </Box>
-        </MenuItem>
-        <Divider />
-        <Box sx={{ p: 2 }}>
-          <Button
-            fullWidth
-            color="primary"
-            sx={{ textTransform: 'none' }}
-          >
-            View All Notifications
-          </Button>
-        </Box>
-      </Menu>
     </>
   );
 };

@@ -19,6 +19,7 @@
     "@nivo/bar": "^0.88.0",
     "@nivo/line": "^0.88.0",
     "@nivo/pie": "^0.88.0",
+    "@paypal/react-paypal-js": "^8.8.2",
     "@radix-ui/react-dialog": "^1.1.5",
     "@radix-ui/react-dropdown-menu": "^2.1.5",
     "@radix-ui/themes": "^3.2.0",
@@ -35,6 +36,7 @@
     "react-markdown": "^10.0.0",
     "react-pro-sidebar": "^1.1.0",
     "react-router-dom": "^6.20.6",
+    "react-toastify": "^11.0.5",
     "tailwind-merge": "^3.0.1",
     "vaul": "^1.1.2",
     "yup": "^1.6.1"
