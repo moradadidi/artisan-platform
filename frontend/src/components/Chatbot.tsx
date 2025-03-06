@@ -123,12 +123,14 @@ export function Chatbot() {
 
       {/* Chat Window */}
       <div className={`
-        fixed bottom-0 right-0 sm:right-6 sm:bottom-6
-        w-1/3 sm:w-[450px] max-w-[100vw] bg-white rounded-t-2xl sm:rounded-2xl
-        shadow-2xl border border-yellow-200 overflow-hidden
-        transform transition-all duration-300 ease-in-out
-        ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}
-      `}>
+         fixed bottom-0 right-0
+          sm:right-6 sm:bottom-6
+          w-[85vw] sm:w-[350px] max-w-[100vw]
+          bg-white rounded-t-2xl sm:rounded-2xl
+          shadow-2xl border border-yellow-200 overflow-hidden
+          transform transition-all duration-300 ease-in-out
+          ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}
+        `}>
         {/* Header */}
         <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 p-4 flex justify-between items-center">
           <div className="flex items-center gap-3">

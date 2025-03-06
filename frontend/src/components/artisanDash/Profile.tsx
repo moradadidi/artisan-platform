@@ -8,19 +8,39 @@ const Profile = () => {
   useEffect(() => {
     document.title = 'Profile - Rarely';
   }, []);
-//   const user = JSON.parse(sessionStorage.getItem('user'));
+
   const token = sessionStorage.getItem('token');
   const fileInputRef = useRef(null);
-  const {user , updateProfilePicture} = useUserAuth();
-//   console.log("prof" ,user);
+    interface User {
+    _id: string;
+    name?: string;
+    email?: string;
+    phoneNumber?: string;
+    address?: string;
+    bio?: string;
+    specialty?: string;
+    socialLinks?: {
+      instagram?: string;
+      twitter?: string;
+      website?: string;
+    };
+    profilePicture?: string;
+    createdAt: string;
+    role: string;
+  }
+  const { user, updateProfilePicture } = useUserAuth();
 
-  // Initialize state for profile info
+  // Initialize state for profile info with extra artisan fields
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phoneNumber: '',
     address: '',
     bio: '',
+    specialty: '',
+    instagram: '',
+    twitter: '',
+    website: ''
   });
   const [password, setPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
@@ -28,7 +48,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Populate the form once on mount from user
+  // Populate the form once on mount from user data
   useEffect(() => {
     if (user) {
       setFormData({
@@ -37,26 +57,30 @@ const Profile = () => {
         phoneNumber: user.phoneNumber || '',
         address: user.address || '',
         bio: user.bio || '',
+        specialty: user.specialty || '',
+        instagram: user.socialLinks?.instagram || '',
+        twitter: user.socialLinks?.twitter || '',
+        website: user.socialLinks?.website || ''
       });
       setProfilePicture(
         user.profilePicture ||
           'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
       );
     }
-  }, []); // run only once
+  }, [user]);
 
-  // Controlled input change for text fields
+  // Handle text input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Controlled input change for password
+  // Handle password changes
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
   };
 
-  // Handle submission for updating general profile info (excluding profile picture)
+  // Handle profile info form submission (excluding picture)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -66,7 +90,7 @@ const Profile = () => {
       if (password) {
         updateData.password = password;
       }
-      // Use the correct endpoint (mounted at /api/register)
+      // Use your API endpoint to update profile data
       const response = await axios.put(
         `https://rarely.onrender.com/api/register/${user._id}`,
         updateData,
@@ -75,7 +99,6 @@ const Profile = () => {
       sessionStorage.setItem('user', JSON.stringify(response.data));
       setMessage('Profile updated successfully!');
       toast.success('Profile updated successfully!');
-    //   sessionStorage.setItem('user', JSON.stringify(response.data));
     } catch (err) {
       console.error(err);
       setMessage('Error updating profile.');
@@ -83,7 +106,7 @@ const Profile = () => {
     setLoading(false);
   };
 
-  // Reset form values to those stored
+  // Reset form values to saved user data
   const handleCancel = () => {
     if (user) {
       setFormData({
@@ -92,26 +115,30 @@ const Profile = () => {
         phoneNumber: user.phoneNumber || '',
         address: user.address || '',
         bio: user.bio || '',
+        specialty: user.specialty || '',
+        instagram: user.socialLinks?.instagram || '',
+        twitter: user.socialLinks?.twitter || '',
+        website: user.socialLinks?.website || ''
       });
       setPassword('');
       setMessage('');
     }
   };
 
-  // Trigger hidden file input for profile picture update
+  // Trigger hidden file input for picture update
   const handleCameraClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  // Upload new profile picture and update user record
+  // Upload new profile picture and update the record
   const handlePictureUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
     const form = new FormData();
-    form.append("image", file);
+    form.append('image', file);
   
     try {
       const response = await axios.post(
@@ -119,7 +146,7 @@ const Profile = () => {
         form,
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${token}`,
           },
         }
@@ -130,28 +157,26 @@ const Profile = () => {
       updateProfilePicture(imageUrl);
       if (imageUrl) {
         toast.success('Profile picture updated successfully!');
-      }else{
-        toast.error('Try diferent image !!!.');
+      } else {
+        toast.error('Try a different image!');
       }
       
-      // Update user profile with new profile picture
+      // Update user profile with new picture
       const updateResponse = await axios.put(
         `https://rarely.onrender.com/api/users/${user._id}`,
         { profilePicture: imageUrl },
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      sessionStorage.setItem("user", JSON.stringify(updateResponse.data));
-      setMessage("Profile picture updated successfully!");
+      sessionStorage.setItem('user', JSON.stringify(updateResponse.data));
+      setMessage('Profile picture updated successfully!');
     } catch (error) {
-      console.error("Upload failed", error);
-      toast.error('Try diferent image !!!.');
-      setMessage("Error uploading profile picture.");
+      console.error('Upload failed', error);
+      toast.error('Try a different image!');
+      setMessage('Error uploading profile picture.');
     }
   };
   
-  
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4">
       <div className="bg-white p-8 rounded-xl shadow-sm">
@@ -159,7 +184,7 @@ const Profile = () => {
         <div className="flex items-center space-x-6">
           <div className="relative">
             <img 
-              src={user.profilePicture ?? profilePicture} 
+              src={user?.profilePicture ?? profilePicture} 
               alt="Profile" 
               className="w-32 h-32 rounded-full object-cover border-4 border-[#FFF8E7]"
             />
@@ -181,23 +206,20 @@ const Profile = () => {
           </div>
           <div>
             <h3 className="text-2xl font-semibold">{formData.name || 'Artisan Name'}</h3>
-            <p className="text-gray-600">Artisan since {user.createdAt.slice(0, 4)}</p>
+            <p className="text-gray-600">Artisan since {user?.createdAt.slice(0, 4)}</p>
             <div className="mt-2 flex items-center space-x-2">
               <span className="px-3 py-1 bg-[#FFF8E7] text-[#FFB636] rounded-full text-sm font-medium">
-                {user.role === 'artisan' ? 'Verified Artisan' : 'Verified Customer'}
+                {user?.role === 'artisan' ? 'Verified Artisan' : 'Verified Customer'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* {message && (
-          <p className="mt-4 text-center text-green-600">{message}</p>
-        )} */}
-
-        {/* General Profile Info Form */}
+        {/* Profile Info Form */}
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-6">Profile Information</h3>
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -229,7 +251,7 @@ const Profile = () => {
                 </label>
                 <div className="relative">
                   <input 
-                    type={showPassword ? "text" : "password"} 
+                    type={showPassword ? 'text' : 'password'} 
                     name="password"
                     value={password}
                     onChange={handlePasswordChange}
@@ -258,20 +280,36 @@ const Profile = () => {
                 />
               </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address
-              </label>
-              <textarea 
-                rows={2}
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
-              />
+
+            {/* Artisan Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Specialty
+                </label>
+                <input 
+                  type="text" 
+                  name="specialty"
+                  value={formData.specialty}
+                  onChange={handleInputChange}
+                  placeholder="e.g. Woodworking, Pottery"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <textarea 
+                  rows={2}
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
+                />
+              </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Bio
@@ -283,6 +321,52 @@ const Profile = () => {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
               />
+            </div>
+
+            {/* Social Links Section */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-4">Social Links</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instagram
+                  </label>
+                  <input 
+                    type="text" 
+                    name="instagram"
+                    value={formData.instagram}
+                    onChange={handleInputChange}
+                    placeholder="Instagram URL"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Twitter
+                  </label>
+                  <input 
+                    type="text" 
+                    name="twitter"
+                    value={formData.twitter}
+                    onChange={handleInputChange}
+                    placeholder="Twitter URL"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Website
+                  </label>
+                  <input 
+                    type="text" 
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    placeholder="Website URL"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FFF8E7] focus:border-[#FFB636] transition-colors"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-4">

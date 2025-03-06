@@ -5,6 +5,7 @@ import ReviewSummary from './ReviewSummary';
 import ReviewForm from './ReviewForm';
 import ReviewList from './ReviewList';
 import { Review, ReviewFormData } from '../../../types';
+import { useParams } from 'react-router-dom';
 
 interface ReviewsTabProps {
   artisanId: string;
@@ -13,6 +14,8 @@ interface ReviewsTabProps {
 const ReviewsTab: React.FC<ReviewsTabProps> = ({ artisanId }) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const {id} = useParams();
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{
@@ -25,11 +28,12 @@ const ReviewsTab: React.FC<ReviewsTabProps> = ({ artisanId }) => {
     severity: 'success'
   });
 
+
   const fetchReviews = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`https://rarely.onrender.com/api/artisanreviews/artisan/${artisanId}`);
+      const response = await axios.get(`https://rarely.onrender.com/api/artisanreviews/artisan/${id}`);
       setReviews(response.data);
     } catch (err) {
       console.error('Error fetching reviews:', err);
@@ -41,13 +45,14 @@ const ReviewsTab: React.FC<ReviewsTabProps> = ({ artisanId }) => {
 
   useEffect(() => {
     fetchReviews();
-  }, [artisanId]);
+  }, [id]);
 
   const handleSubmitReview = async (data: ReviewFormData) => {
     setIsSubmitting(true);
     try {
       await axios.post('https://rarely.onrender.com/api/artisanreviews', {
-        artisanId,
+        artisanId: id,
+        customerId : user._id,
         rating: data.rating,
         comment: data.comment
       });

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Grid,
@@ -13,18 +13,8 @@ import {
   Avatar,
   Rating,
   Fade,
-  useTheme,
-  Drawer,
-  Slider,
-  FormGroup,
-  FormControlLabel,
-  Checkbox,
-  Divider,
-  Breadcrumbs,
-  Paper,
-  InputBase,
-  Tooltip,
   Skeleton,
+  Tooltip,
 } from '@mui/material';
 import {
   Heart,
@@ -35,19 +25,17 @@ import {
   Search,
   Star,
 } from 'lucide-react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { tokens } from '../../theme';
+import { useTheme } from '@emotion/react';
 
 /** Hero Banner Component */
 const HeroBanner = () => {
-  const [loaded, setLoaded] = useState(false);
+  // Instead of a simple boolean, we wait for the hero image to load.
+  const [heroLoaded, setHeroLoaded] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setLoaded(true);
-  }, []);
 
   return (
     <Box
@@ -63,6 +51,7 @@ const HeroBanner = () => {
         component="img"
         image="./valeria.jpg"
         alt="Hero Banner"
+        onLoad={() => setHeroLoaded(true)}
         sx={{
           width: '100%',
           height: '100%',
@@ -88,7 +77,8 @@ const HeroBanner = () => {
           p: 2,
         }}
       >
-        <Fade in={loaded} timeout={1000}>
+        {/* Fade in the text/buttons only after the image is loaded */}
+        <Fade in={heroLoaded} timeout={800}>
           <Box>
             <Typography
               variant="h3"
@@ -150,8 +140,9 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
     product.images && product.images.length > 0 ? product.images[0] : '/default.png';
   const userData = product.user || {};
   const userName = userData.name || 'Unknown Artisan';
-  const userAddress = userData.adresse || 'No address provided';
+  const userAddress = userData.address || 'No address provided';
   const userProfilePic = userData.profilePicture || '/default.png';
+  console.log(product.rating)
 
   return (
     <Card
@@ -176,7 +167,7 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
           sx={{
             objectFit: 'cover',
             transition: 'transform 0.3s ease-in-out',
-            '&:hover': { transform: 'scale(1.05)' } ,
+            '&:hover': { transform: 'scale(1.05)' },
             aspectRatio: '1/1',
           }}
           onClick={() => navigate(`/products/${product._id}`)}
@@ -214,7 +205,7 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
             '&:hover .artisan-name': { color: 'primary.main' },
           }}
           onClick={() => {
-            // if (userData._id) navigate(`/artisans/${userData._id}`);
+            if (userData._id) navigate(`/artisans/${userData._id}`);
           }}
         >
           <Avatar
@@ -232,16 +223,28 @@ const ProductCard = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => 
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <MapPin size={14} color="#666" />
-              <Typography variant="caption" color="text.secondary">
-                {userAddress}
-              </Typography>
+              <Tooltip title={userAddress}>
+  <Typography
+    variant="caption"
+    color="text.secondary"
+    sx={{
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      maxWidth: 200, // adjust as needed
+    }}
+  >
+    {userAddress}
+  </Typography>
+</Tooltip>
+
             </Box>
           </Box>
           <Box sx={{ ml: 'auto', textAlign: 'right' }}>
-            <Rating value={product.rating || 3} size="small" readOnly />
-            <Typography variant="caption" color="text.secondary" display="block">
+            <Rating value={product.averageRating	 || 3} size="small" readOnly />
+            {/* <Typography variant="caption" color="text.secondary" display="block">
               {product.reviews || 0} reviews
-            </Typography>
+            </Typography> */}
           </Box>
         </Box>
         <Typography
@@ -334,12 +337,7 @@ const ProductSection = ({ title, products, favorites, onFavoriteToggle, onViewAl
 
 /** Main Home Component */
 const Home = () => {
-  useEffect(() => {
-    document.title = 'Home - Rarely';
-  }, []);
-
   const navigate = useNavigate();
-  // Initialize user in state so it doesn't change on every render.
   const [user] = useState(() => JSON.parse(sessionStorage.getItem('user')));
   const token = sessionStorage.getItem('token');
 
@@ -347,6 +345,11 @@ const Home = () => {
   const [popularProducts, setPopularProducts] = useState([]);
   const [favorites, setFavorites] = useState({});
   const [loading, setLoading] = useState(true);
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Home - Rarely';
+  }, []);
 
   // Fetch favorites for the logged-in user.
   useEffect(() => {
@@ -368,7 +371,6 @@ const Home = () => {
         console.error('Error fetching favorites:', error);
       }
     };
-
     fetchFavorites();
   }, [user, token]);
 
@@ -458,43 +460,47 @@ const Home = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="lg" className="mt-4 mb-4">
-        {/* Skeleton for HeroBanner */}
-        <Skeleton variant="rectangular" height={300} className="mb-6 rounded" />
-        {/* Skeleton for section header */}
-        <Skeleton variant="text" width="30%" height={40} className="mb-4" />
-        <Grid container spacing={3}>
-          {Array.from(new Array(6)).map((_, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Skeleton variant="rectangular" height={350} className="rounded" />
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    );
-  }
-
   return (
     <Container maxWidth="lg" className="mt-4 mb-4">
-      <HeroBanner />
-      <ProductSection
-        title="Latest Arrivals"
-        products={latestProducts}
-        favorites={favorites}
-        onFavoriteToggle={handleFavoriteToggle}
-        onAddToCart={handleAddToCart}
-        onViewAll={() => navigate('/shop')}
-      />
-      <ProductSection
-        title="Most Popular"
-        products={popularProducts}
-        favorites={favorites}
-        onFavoriteToggle={handleFavoriteToggle}
-        onAddToCart={handleAddToCart}
-        onViewAll={() => navigate('/shop')}
-      />
+      {/* If loading, show skeleton placeholders (including hero banner) */}
+      {loading ? (
+        <>
+          {/* Skeleton for HeroBanner */}
+          <Skeleton variant="rectangular" height={500} className="mb-6 rounded" />
+          {/* Skeleton for section header */}
+          <Skeleton variant="text" width="30%" height={40} className="mb-4" />
+          <Grid container spacing={3}>
+            {Array.from(new Array(6)).map((_, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Skeleton variant="rectangular" height={350} className="rounded" />
+              </Grid>
+            ))}
+          </Grid>
+        </>
+      ) : (
+        /* Fade in the content once loaded */
+        <Fade in={!loading} timeout={700}>
+          <Box>
+            <HeroBanner />
+            <ProductSection
+              title="Latest Arrivals"
+              products={latestProducts}
+              favorites={favorites}
+              onFavoriteToggle={handleFavoriteToggle}
+              onAddToCart={handleAddToCart}
+              onViewAll={() => navigate('/shop')}
+            />
+            <ProductSection
+              title="Most Popular"
+              products={popularProducts}
+              favorites={favorites}
+              onFavoriteToggle={handleFavoriteToggle}
+              onAddToCart={handleAddToCart}
+              onViewAll={() => navigate('/shop')}
+            />
+          </Box>
+        </Fade>
+      )}
     </Container>
   );
 };

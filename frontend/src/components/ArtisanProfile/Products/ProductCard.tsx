@@ -22,17 +22,16 @@ interface ProductCardProps {
   onAddToCart: (productId: string) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, isFavorite, onFavoriteToggle, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({user , product, isFavorite, onFavoriteToggle, onAddToCart }) => {
   const navigate = useNavigate();
 
   const mainImage =
     product.images && product.images.length > 0 ? product.images[0] : '/default.png';
 
   // Assuming product.user contains artisan details.
-  const userData = product.user || {};
-  const userName = userData.name || 'Unknown Artisan';
-  const userAddress = userData.adresse || 'No address provided';
-  const userProfilePic = userData.profilePicture || '/default.png';
+  const userName = user.name || 'Unknown Artisan';
+  const userAddress = user.adresse || 'No address provided';
+  const userProfilePic = user.profilePicture || '/default.png';
 
   return (
     <Card

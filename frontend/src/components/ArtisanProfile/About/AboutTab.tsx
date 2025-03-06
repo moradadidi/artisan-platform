@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Divider } from '@mui/material';
+import { Box, Typography, Paper, Divider, Grid } from '@mui/material';
 import { ArtisanData } from '../../../types';
 
 interface AboutTabProps {
@@ -8,37 +8,53 @@ interface AboutTabProps {
 
 const AboutTab: React.FC<AboutTabProps> = ({ artisanData }) => {
   return (
-    <Paper elevation={1} sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        About {artisanData.name}
+    <Paper elevation={2} sx={{ p: 4, borderRadius: 2 }}>
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+        About {artisanData.name || 'the Artisan'}
       </Typography>
-      <Divider sx={{ mb: 2 }} />
+      <Divider sx={{ mb: 3 }} />
       
-      <Typography variant="body1" paragraph>
-        {artisanData.bio}
-      </Typography>
+      {/* Bio Section */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
+          Bio
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {artisanData.bio || 'No bio available at the moment.'}
+        </Typography>
+      </Box>
       
-      <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-        Specialty
-      </Typography>
-      <Typography variant="body1" paragraph>
-        {artisanData.specialty || 'Artisanal Crafts'}
-      </Typography>
+      <Grid container spacing={3}>
+        {/* Specialty Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
+            Specialty
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {artisanData.specialty || 'Artisanal Crafts'}
+          </Typography>
+        </Grid>
+
+        {/* Location Section */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
+            Location
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {artisanData.address || 'No location provided.'}
+          </Typography>
+        </Grid>
+      </Grid>
       
-      <Typography variant="h6" gutterBottom>
-        Location
-      </Typography>
-      <Typography variant="body1" paragraph>
-        {artisanData.address}
-      </Typography>
-      
-      <Typography variant="h6" gutterBottom>
-        Experience
-      </Typography>
-      <Typography variant="body1">
-        With {artisanData.stats?.completedOrders || 0} completed orders and an average rating of {artisanData.stats?.averageRating || 0}, 
-        {artisanData.name} has established a reputation for quality craftsmanship and customer satisfaction.
-      </Typography>
+      {/* Experience Section */}
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 1 }}>
+          Experience
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          With {artisanData.stats?.completedOrders ?? 0} completed orders and an average rating of {artisanData.stats?.averageRating ?? 0}, {artisanData.name || 'this artisan'} has established a reputation for quality craftsmanship and customer satisfaction.
+        </Typography>
+      </Box>
     </Paper>
   );
 };

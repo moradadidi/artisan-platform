@@ -17,7 +17,6 @@ export interface ArtisanData {
       totalSales: number;
       completedOrders: number;
       averageRating: number;
-      responseTime: string;
     };
     products: Product[];
   }
@@ -39,7 +38,11 @@ export interface ArtisanData {
     userAvatar?: string;
     rating: number;
     comment: string;
-    date: string;
+    createdAt: string;
+    customerId: {
+      profilePicture: string;
+      name: string;
+    }
   }
   
   export interface ReviewFormData {

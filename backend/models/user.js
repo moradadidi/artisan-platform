@@ -30,26 +30,41 @@ const userSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String,
-    required: false,
   },
   phoneNumber: {
     type: String,
-    required: false,
   },
   address: {
     type: String,
-    required: false,
   },
   bio: {
     type: String,
-    required: false,
   },
-  // Field for email verification status
+  // Extra artisan-related fields (optional)
+  specialty: {
+    type: String,
+  },
+  rating: {
+    type: Number,
+    default: 0,
+  },
+  reviews: {
+    type: Number,
+    default: 0,
+  },
+  socialLinks: {
+    instagram: { type: String },
+    twitter: { type: String },
+    website: { type: String },
+  },
+  // Email verification status
   isVerified: {
     type: Boolean,
     default: false,
   },
-  verificationToken: { type: String }, 
+  verificationToken: { 
+    type: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -58,7 +73,9 @@ const userSchema = new mongoose.Schema({
 
 // Method to generate authentication token (e.g., for login sessions)
 userSchema.methods.generateAuthToken = function () {
-  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: "15d" });
+  return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
+    expiresIn: "15d",
+  });
 };
 
 // Method to compare passwords

@@ -7,6 +7,7 @@ interface ReviewItemProps {
 }
 
 const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
+  console.log(review);
   return (
     <Paper 
       elevation={1} 
@@ -22,17 +23,20 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ review }) => {
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
         <Avatar 
-          src={review.userAvatar} 
-          alt={review.userName}
-          sx={{ mr: 2 }}
+          src={review.customerId.profilePicture} 
+          alt={review.customerId.name}
+          sx={{ mr: 2 , cursor: 'pointer' }}
+          onClick={() => {
+            window.location.href = `/artisans/${review.customerId._id}`
+          }}
         />
         <Box sx={{ flex: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
             <Typography variant="subtitle1" fontWeight="bold">
-              {review.userName}
+              {review.customerId.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {new Date(review.date).toLocaleDateString()}
+              {new Date(review.createdAt).toLocaleDateString()}
             </Typography>
           </Box>
           <Rating value={review.rating} precision={0.5} size="small" readOnly sx={{ mb: 1 }} />

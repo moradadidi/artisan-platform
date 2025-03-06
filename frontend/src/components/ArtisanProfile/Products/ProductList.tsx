@@ -42,7 +42,7 @@ const ProductList: React.FC<ProductListProps> = ({ user, token }) => {
       setLoading(false);
     }
   };
-
+  
   const fetchFavorites = async () => {
     if (!user || !user._id) {
       console.error('User is not defined or does not have an _id');
@@ -164,6 +164,7 @@ const ProductList: React.FC<ProductListProps> = ({ user, token }) => {
       {products.map((product) => (
         <Grid item xs={12} sm={6} md={4} key={product._id}>
           <ProductCard
+          user = {user}
             product={product}
             isFavorite={!!favorites[product._id]?.isFavorite}
             onFavoriteToggle={handleFavoriteToggle}
