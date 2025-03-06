@@ -179,15 +179,15 @@ const Products = () => {
         id: product._id,
         name: product.name,
         price: product.price || 0,
-        rating: product.rating || 0,
+        rating: product.averageRating || 3 ,
         reviews: product.numReviews || 0,
         image: product.images[0] || "",
         artisan: {
           id: product.user._id || 0,
           name: product.user.name || "Unknown",
           avatar: product.user.profilePicture || "",
-          location: product.user.adresse || "Canada, Ontario",
-          rating: product.artisanRating || 3,
+          location: product.user.address || "Canada, Ontario",
+          rating: product.averageRating || 3,
           reviews: product.artisanReviews || 125,
         },
         category: product.category || "Uncategorized",
@@ -405,14 +405,14 @@ const Products = () => {
                 </Box>
               </Box>
               <Box sx={{ ml: "auto", textAlign: "right" }}>
-                <Rating value={product.artisan.rating} size="small" readOnly />
-                <Typography
+                <Rating value={product.rating} size="small" readOnly />
+                {/* <Typography
                   variant="caption"
                   color="text.secondary"
                   display="block"
                 >
                   {product.artisan.reviews} reviews
-                </Typography>
+                </Typography> */}
               </Box>
             </Box>
             <Typography
@@ -437,7 +437,7 @@ const Products = () => {
                 />
               ))}
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+            {/* <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <Rating
                 value={product.rating}
                 precision={0.5}
@@ -447,7 +447,7 @@ const Products = () => {
               <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                 ({product.reviews})
               </Typography>
-            </Box>
+            </Box> */}
             <Box
               sx={{
                 display: "flex",
