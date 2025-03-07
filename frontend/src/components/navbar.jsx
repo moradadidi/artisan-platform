@@ -318,11 +318,11 @@ const Navbar = () => {
                   onClose={handleProfileClose}
                   onClick={handleProfileClose}
                   transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                  anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
                   PaperProps={{
                     elevation: 2,
                     sx: {
-                      mt: 1.5,
+                      mt: 5.5,
                       width: 220,
                       overflow: 'visible',
                       filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',

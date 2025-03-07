@@ -36,7 +36,7 @@ import {
   ArrowUpRight,
   MapPin,
 } from "lucide-react";
-import { useNavigate  , useLocation} from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -57,7 +57,6 @@ const Products = () => {
     document.title = "Shop - Rarely";
   }, []);
 
-
   const [products, setProducts] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 2000]);
   const [selectedCategories, setSelectedCategories] = useState([
@@ -68,14 +67,11 @@ const Products = () => {
   const [loading, setLoading] = useState(true); // For showing a loading state
   const navigate = useNavigate();
 
-  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const query = params.get("search") || "";
     setSearchQuery(decodeURIComponent(query));
   }, [location.search]);
-  
-
 
   const user = JSON.parse(sessionStorage.getItem("user"));
   const token = sessionStorage.getItem("token");
@@ -179,7 +175,7 @@ const Products = () => {
         id: product._id,
         name: product.name,
         price: product.price || 0,
-        rating: product.averageRating || 3 ,
+        rating: product.averageRating || 3,
         reviews: product.numReviews || 0,
         image: product.images[0] || "",
         artisan: {
@@ -399,9 +395,20 @@ const Products = () => {
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <MapPin size={14} color="#666" />
-                  <Typography variant="caption" color="text.secondary">
-                    {product.artisan.location}
-                  </Typography>
+                  <Tooltip title={product.artisan.location}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        maxWidth: 120, // adjust as needed
+                      }}
+                    >
+                      {product.artisan.location}
+                    </Typography>
+                  </Tooltip>
                 </Box>
               </Box>
               <Box sx={{ ml: "auto", textAlign: "right" }}>
